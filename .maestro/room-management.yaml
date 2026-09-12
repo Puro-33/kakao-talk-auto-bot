@@ -7,19 +7,60 @@ appId: com.example.kakaotalkautobot
 - tapOn:
     id: "input_room_name"
 - inputText: "test-room"
+- hideKeyboard
 - tapOn:
     id: "btn_add_room"
 - assertVisible: "test-room"
-- tapOn: "test-room"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      id: "bot_secondary_action"
+    direction: DOWN
+- tapOn:
+    id: "bot_secondary_action"
+- assertVisible:
+    id: "debug_room_scroll"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "방 메모리 편집"
+    direction: UP
 - assertVisible: "방 메모리 편집"
+- scrollUntilVisible:
+    element:
+      id: "edit_memory"
+    direction: DOWN
 - assertVisible: "방 메모리"
+- scrollUntilVisible:
+    element:
+      id: "edit_room_style"
+    direction: DOWN
 - assertVisible: "수동 방 말투"
+- scrollUntilVisible:
+    element:
+      id: "switch_learned_room_style"
+    direction: DOWN
 - assertVisible: "학습된 방 말투 사용"
-- assertVisible: "수정 초기화"
+- scrollUntilVisible:
+    element:
+      id: "btn_clear_room_learning_source"
+    direction: DOWN
+- assertVisible:
+    id: "btn_reset_learned_room_style"
+    text: "수정 없음"
+    enabled: false
 - assertVisible: "학습 원본 삭제"
 - tapOn: "학습 원본 삭제"
 - assertVisible: "대화 파일 가져오기"
 - pressKey: back
+- scrollUntilVisible:
+    element:
+      text: "방 메모리 편집"
+    direction: UP
 - assertVisible: "방 메모리 편집"
 - pressKey: back
+- scrollUntilVisible:
+    element:
+      text: "대상 방 관리"
+    direction: UP
 - assertVisible: "대상 방 관리"

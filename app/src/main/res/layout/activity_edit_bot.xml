@@ -204,7 +204,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="현재 메시지, 사용자 예시, 방별 말투, 최근 대화, 방 메모, 자동 메모리 요약을 함께 참고해 답장합니다."
+                    android:text="현재 메시지, 최근 대화와 직접 입력한 방 메모를 근거로 답장합니다. 수동 예시와 자동 분석한 말투는 표현 형식에만 참고합니다."
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
