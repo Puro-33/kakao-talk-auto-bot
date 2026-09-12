@@ -27,5 +27,5 @@
     <string name="model_validation_failed">⚠️ 모델 검증 실패 (%1$dMB) · %2$s · 기본 모델 다운로드 필요</string>
     <string name="model_download_default">Gemma 4 다운로드 (~2.58GB)</string>
     <string name="model_required">⚠️ Gemma 4 모델이 필요합니다</string>
-    <string name="model_download_progress">다운로드 중... %1$d%%</string>
+    <string name="model_download_progress">다운로드 중… %1$d%%</string>
 </resources>

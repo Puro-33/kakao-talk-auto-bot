@@ -33,7 +33,7 @@
     <string name="local_engine_label">로컬 응답 엔진</string>
     <string name="action_memo">메모</string>
     <string name="room_summary_empty">메모 없음 · CSV 미가져옴</string>
-    <string name="model_status_checking">모델 상태 확인 중...</string>
+    <string name="model_status_checking">모델 상태 확인 중…</string>
     <string name="reply_all_rooms">모든 방에서 답장</string>
     <string name="ignored_senders_hint">무시할 사람 이름 목록 (줄바꿈 또는 쉼표)</string>
     <string name="trigger_mode_label">반응 조건</string>
