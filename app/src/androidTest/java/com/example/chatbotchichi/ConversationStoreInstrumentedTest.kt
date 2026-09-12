@@ -32,7 +32,8 @@ class ConversationStoreInstrumentedTest {
 
     @Before fun setUp() {
         ConversationStore.closeForTest()
-        context = IsolatedConversationContext(InstrumentationRegistry.getInstrumentation().context)
+        // Instrumentation runs with the target app UID; the test APK's private directory is not writable.
+        context = IsolatedConversationContext(InstrumentationRegistry.getInstrumentation().targetContext)
     }
 
     @After fun tearDown() {
@@ -141,7 +142,8 @@ class ConversationStoreInstrumentedTest {
             it.execSQL("UPDATE messages SET sent_at=? WHERE room_id=?", arrayOf<Any>(expiredAt, room))
             it.execSQL("UPDATE imports SET imported_at=? WHERE room_id=?", arrayOf<Any>(expiredAt, room))
         }
-        ConversationStore.maintain(context)
+        ConversationStore.closeForTest()
+        assertFalse(ConversationStore.profiles(context, room, refresh = false).first.usable)
         for (table in listOf("messages", "participants", "imports")) assertEquals(table, 0, count(table, room))
         assertEquals(0, ConversationStore.profiles(context, room).first.sampleCount)
         assertFalse(ConversationStore.profilePreview(context, room).contains("보관표현"))

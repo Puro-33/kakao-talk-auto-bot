@@ -9,7 +9,7 @@
   - `assembleRelease`
   - 테스트/린트/APK 아티팩트 업로드
 - `Maestro UI Test`
-  - `workflow_dispatch` 수동 실행 전용이며 PR/릴리즈 필수 게이트에는 포함하지 않음
+  - 대화 화면·홈 레이아웃·Maestro flow/워크플로 변경 push와 `workflow_dispatch` 수동 실행을 지원하며 릴리즈 필수 게이트에는 포함하지 않음
   - Ubuntu + KVM, API 30 x86_64 에뮬레이터에서 실행하도록 구성
   - 에뮬레이터 시작 전에 debug APK를 빌드하고 애니메이션을 비활성화
   - 대화 수집 화면, 파일 선택 취소, 홈, 응답 설정, 기존 학습 삭제 버튼의 대화 선택 화면 이동을 검사
@@ -31,7 +31,7 @@
 
 - 태그 릴리즈 전에는 JVM 테스트, lint, debug/release APK 빌드가 모두 통과해야 한다.
 - 릴리즈 워크플로는 `validate` 잡이 성공한 뒤에만 GitHub Release를 생성한다.
-- Maestro는 로컬 또는 수동 워크플로 검증 자산으로 유지한다.
+- Maestro는 UI 변경 push 또는 로컬/수동 워크플로에서 검증한다.
 - `validate` 단계의 `assembleRelease` 는 서명 시크릿이 없어도 계속 실행 가능해야 하며, 이 경우 unsigned 결과물은 검증용으로만 취급한다.
 
 ## 릴리즈

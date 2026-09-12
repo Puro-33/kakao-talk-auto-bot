@@ -346,7 +346,10 @@ object ConversationStore {
             db.delete("imports", "imported_at<?", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
             db.execSQL("DELETE FROM participants WHERE NOT EXISTS (SELECT 1 FROM messages WHERE messages.room_id=participants.room_id AND messages.sender=participants.name)")
             rooms.forEach { dirty(db, it) }
-            if (rooms.isNotEmpty()) privacyRevision++
+            if (rooms.isNotEmpty()) {
+                privacyRevision++
+                refreshDirty(db) // Cached reply paths must not retain expired samples.
+            }
         }
         lastPrunedAt = now
     }

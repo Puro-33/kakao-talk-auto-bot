@@ -1,6 +1,12 @@
 name: Maestro UI Test
 
 on:
+  push:
+    paths:
+      - '.github/workflows/maestro.yml'
+      - '.maestro/**'
+      - 'app/src/main/java/com/example/chatbotchichi/ConversationActivity.kt'
+      - 'app/src/main/res/layout/activity_main.xml'
   workflow_dispatch:
 
 concurrency:
