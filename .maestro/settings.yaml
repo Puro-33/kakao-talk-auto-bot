@@ -29,9 +29,10 @@ appId: com.example.kakaotalkautobot
     id: "text_provider_summary"
 - scrollUntilVisible:
     element:
-      text: "현재 메시지, 최근 대화와 직접 입력한 방 메모를 근거로 답장합니다. 수동 예시와 자동 분석한 말투는 표현 형식에만 참고합니다."
+      id: "text_grounding_summary"
     direction: DOWN
-- assertVisible: "현재 메시지, 최근 대화와 직접 입력한 방 메모를 근거로 답장합니다. 수동 예시와 자동 분석한 말투는 표현 형식에만 참고합니다."
+- assertVisible:
+    id: "text_grounding_summary"
 - scrollUntilVisible:
     element:
       text: "답장 동작"
@@ -42,4 +43,8 @@ appId: com.example.kakaotalkautobot
       text: "설정 저장"
     direction: DOWN
 - tapOn: "설정 저장"
+- scrollUntilVisible:
+    element:
+      text: "AI 자동 답장"
+    direction: UP
 - assertVisible: "AI 자동 답장"
