@@ -18,6 +18,7 @@
   - push / pull request / 수동 실행에서 Ubuntu + KVM, API 29 x86_64 사용
   - `ConversationStoreInstrumentedTest`로 실제 SQLite 저장·가져오기·중복·삭제·방 식별 등의 동작을 검사
   - Android instrumentation 결과와 HTML 보고서 업로드
+  - 성공 시 같은 작업에서 빌드한 debug 앱·instrumentation APK를 `device-test-apks`로 업로드해 실기기에서 재검증 가능
 
 ## 대화 수집 검증 범위와 상태
 

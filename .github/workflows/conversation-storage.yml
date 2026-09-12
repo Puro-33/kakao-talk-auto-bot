@@ -45,3 +45,11 @@ jobs:
           path: |
             app/build/reports/androidTests/**
             app/build/outputs/androidTest-results/**
+      - name: Upload device test APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: device-test-apks
+          if-no-files-found: error
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/androidTest/debug/*.apk
