@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-/** Returns a room title only after the user confirms the explicitly selected Kakao row. */
+/** Confirms the toolbar title selected with the explicit overlay action in Kakao. */
 class RoomSelectionActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_ROOM_TITLE = "roomTitle"
@@ -71,7 +71,7 @@ class RoomSelectionActivity : AppCompatActivity() {
             finish()
         }.apply { isEnabled = false }
         content.addView(confirm)
-        content.addView(button(android.R.string.cancel, R.id.room_selection_cancel) { finish() })
+        content.addView(button(R.string.capture_cancel, R.id.room_selection_cancel) { finish() })
     }
 
     override fun onResume() {

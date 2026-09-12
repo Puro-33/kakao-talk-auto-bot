@@ -1,4 +1,4 @@
 <resources>
     <string name="room_selection_service_label">카카오톡 방 직접 선택</string>
-    <string name="room_selection_service_description">앱에서 방 선택을 시작한 뒤 2분 동안 카카오톡에서 직접 누른 채팅방의 이름만 읽습니다. 메시지 내용은 읽거나 저장하지 않으며, 화면을 자동으로 누르지 않습니다. 앱으로 돌아와 방 이름을 확인한 뒤 선택을 완료합니다.</string>
+    <string name="room_selection_service_description">앱에서 방 선택을 시작한 뒤 2분 동안 현재 방 선택 버튼을 표시합니다. 사용자가 버튼을 누르면 열린 카카오톡 대화방의 제목만 읽습니다. 메시지 내용은 읽거나 저장하지 않으며 화면을 자동으로 누르지 않습니다. 앱으로 돌아와 방 이름을 확인한 뒤 선택을 완료합니다.</string>
 </resources>

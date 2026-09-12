@@ -1,0 +1,6 @@
+<resources>
+    <string name="room_selection_overlay_instruction">원하는 대화방을 연 뒤 현재 방을 선택하세요.</string>
+    <string name="room_selection_overlay_select">현재 방 선택</string>
+    <string name="room_selection_overlay_cancel">취소</string>
+    <string name="room_selection_overlay_no_chat">대화방 제목을 확인하지 못했습니다. 원하는 대화방을 열고 다시 선택하세요.</string>
+</resources>

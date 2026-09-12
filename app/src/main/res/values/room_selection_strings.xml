@@ -1,7 +1,7 @@
 <resources>
     <string name="room_selection_title">카카오톡에서 방 선택</string>
-    <string name="room_selection_disclosure">이 기능을 시작한 뒤 최대 2분 동안, 카카오톡 채팅 목록에서 직접 누른 방의 이름만 접근성 기능으로 읽습니다. 대화 본문은 읽지 않으며, 아래에서 선택을 확인하기 전에는 방을 등록하지 않습니다.</string>
-    <string name="room_selection_steps">1. 접근성 설정에서 이 앱의 방 선택 서비스를 허용하세요.\n2. 선택 시작을 누르고 카카오톡의 채팅 탭에서 원하는 방을 직접 누르세요.\n3. 이 화면으로 돌아와 방 이름을 확인하세요. 자동으로 돌아오지 않으면 최근 앱에서 직접 돌아올 수 있습니다.</string>
+    <string name="room_selection_disclosure">선택을 시작한 뒤 최대 2분 동안 카카오톡 위에 현재 방 선택 버튼을 표시합니다. 그 버튼을 직접 누를 때만 현재 대화방 상단의 방 이름을 접근성 기능으로 읽습니다. 대화 본문은 읽지 않으며, 이 앱에서 선택을 확인하기 전에는 방을 등록하지 않습니다.</string>
+    <string name="room_selection_steps">1. 접근성 설정에서 이 앱의 방 선택 서비스를 허용하세요.\n2. 선택 시작을 누르고 카카오톡에서 원하는 대화방을 여세요.\n3. 카카오톡 위의 현재 방 선택 버튼을 누르세요.\n4. 이 화면으로 돌아와 방 이름을 확인하세요. 자동으로 돌아오지 않으면 최근 앱에서 직접 돌아올 수 있습니다.</string>
     <string name="room_selection_name_limit">방 이름으로 연결됩니다. 이름이 같은 방은 구분할 수 없으며, 카카오톡의 영구 방 ID를 가져오는 기능은 아닙니다.</string>
     <string name="room_selection_accessibility_settings">접근성 설정 열기</string>
     <string name="room_selection_start">선택 시작 · 카카오톡 열기</string>
@@ -9,7 +9,7 @@
     <string name="room_selection_confirm">이 방 선택 확인</string>
     <string name="room_selection_permission_needed">접근성 설정에서 이 앱의 방 선택 서비스를 허용한 뒤 다시 시작하세요.</string>
     <string name="room_selection_kakao_missing">카카오톡을 열 수 없습니다. 설치 상태를 확인하세요.</string>
-    <string name="room_selection_waiting">카카오톡 채팅 목록에서 방을 누른 뒤 돌아오세요. 방 이름을 읽지 못한 경우 다시 시작할 수 있습니다.</string>
+    <string name="room_selection_waiting">카카오톡에서 원하는 대화방을 연 뒤 현재 방 선택 버튼을 누르세요. 이미 열린 방에서도 선택할 수 있습니다. 버튼이 없거나 시간이 지났으면 이 화면에서 다시 시작하세요.</string>
     <string name="room_selection_selected_title">선택한 방: %1$s\n이 이름이 맞는지 확인하세요.</string>
     <string name="room_selection_expired">선택 시간이 지났거나 선택이 취소되었습니다. 방은 등록되지 않았습니다. 다시 시작할 수 있습니다.</string>
 </resources>
