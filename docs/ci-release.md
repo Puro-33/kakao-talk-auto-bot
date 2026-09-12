@@ -9,9 +9,23 @@
   - `assembleRelease`
   - 테스트/린트/APK 아티팩트 업로드
 - `Maestro UI Test`
-  - 현재는 GitHub-hosted 에뮬레이터 인식 문제 때문에 `workflow_dispatch` 수동 실행 전용
-  - 로컬 또는 별도 안정화 후 다시 PR/릴리즈 게이트에 편입
+  - `workflow_dispatch` 수동 실행 전용이며 PR/릴리즈 필수 게이트에는 포함하지 않음
+  - Ubuntu + KVM, API 30 x86_64 에뮬레이터에서 실행하도록 구성
+  - 에뮬레이터 시작 전에 debug APK를 빌드하고 애니메이션을 비활성화
+  - 대화 수집 화면, 파일 선택 취소, 홈, 응답 설정, 기존 학습 삭제 버튼의 대화 선택 화면 이동을 검사
   - JUnit 결과, debug output, 테스트 아티팩트, logcat 업로드
+- `Conversation storage tests`
+  - push / pull request / 수동 실행에서 Ubuntu + KVM, API 29 x86_64 사용
+  - `ConversationStoreInstrumentedTest`로 실제 SQLite 저장·가져오기·중복·삭제·방 식별 등의 동작을 검사
+  - Android instrumentation 결과와 HTML 보고서 업로드
+
+## 대화 수집 검증 범위와 상태
+
+- `.github/workflows/conversation-storage.yml`은 SQLite 통합 검증, `maestro.yml`은 사용자 화면 검증을 담당한다.
+- Maestro는 `conversations.yaml`, `home.yaml`, `settings.yaml`, `room-management.yaml`만 별도 실행 폴더에 모아 실행한다. 각 flow는 앱 데이터를 초기화하며 개인 대화 파일을 사용하지 않는다.
+- CLI 설치와 출력 옵션은 [공식 설치 안내](https://github.com/mobile-dev-inc/Maestro#installing-the-cli)와 [테스트 아티팩트 안내](https://docs.maestro.dev/cli/test-output-directory)를 따른다. 실제 실행한 CLI 버전은 워크플로 로그에 남긴다.
+- 이 구성의 추가 자체는 테스트 통과를 의미하지 않는다. 최종 커밋의 Actions 실행 결과와 업로드된 보고서를 확인해야 한다.
+- UI smoke는 파일 선택 창 진입·취소까지 검사한다. 실제 대화 파일 선택 후 가져오기 전체 과정, 카카오톡 알림 식별 안정성, ARM64 기기의 모델 추론·실제 답장 도착은 별도 실기기 검증이 필요하다.
 
 ## 릴리즈 게이트
 

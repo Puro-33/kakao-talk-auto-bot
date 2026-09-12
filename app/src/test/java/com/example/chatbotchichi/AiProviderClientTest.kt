@@ -171,6 +171,21 @@ class AiProviderClientTest {
     }
 
     @Test
+    fun buildEmergencyPrompt_retains_automatically_learned_style_and_grounding_rule() {
+        val guide = StyleProfileStore.composePromptStyleGuide(
+            StyleProfileStore.StyleGuideParts(
+                learnedUserStyle = "짧은 반말과 물음표를 자주 사용",
+                learnedUserSampleCount = 24
+            )
+        )
+        val prompt = AiProviderClient.buildEmergencyPrompt(
+            AutoReplyJson.defaultConfig("방"), "방", "친구", "뭐 해?", emptyList(), guide
+        )
+        assertTrue(prompt.contains("짧은 반말과 물음표를 자주 사용"))
+        assertTrue(prompt.contains("말투 예문은 표현만 참고하고 사실은 현재 대화 근거로 확인해라."))
+    }
+
+    @Test
     fun buildInitialCandidateSpecs_preparesPrimaryHumanStyleRewriteAndCompactLanes() {
         val config = AutoReplyJson.defaultConfig("친구방").copy(
             persona = "친구처럼 짧게 답해",

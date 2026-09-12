@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   maestro:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 35
 
     steps:
@@ -31,11 +31,26 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: Grant Gradle permission
         run: chmod +x gradlew
 
       - name: Install Maestro
-        run: curl -Ls "https://get.maestro.mobile.dev" | bash
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Build APK and prepare UI suite
+        run: |
+          maestro --version
+          ./gradlew assembleDebug --no-daemon --max-workers=2 --console=plain
+          mkdir -p .maestro-smoke .maestro-results .maestro-debug .maestro-artifacts
+          cp .maestro/conversations.yaml .maestro/home.yaml .maestro/settings.yaml .maestro/room-management.yaml .maestro-smoke/
 
       - name: Run Maestro flows
         uses: reactivecircus/android-emulator-runner@v2
@@ -43,19 +58,12 @@ jobs:
           api-level: 30
           arch: x86_64
           profile: pixel_5
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
-            export PATH="$PATH:$HOME/.maestro/bin"
-            mkdir -p .maestro-results .maestro-debug .maestro-artifacts
             adb logcat -c
-            ./gradlew assembleDebug
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            maestro test .maestro \
-              --format junit \
-              --output .maestro-results/junit.xml \
-              --debug-output .maestro-debug \
-              --test-output-dir .maestro-artifacts \
-              --flatten-debug-output
-            adb logcat -d > .maestro-results/logcat.txt
+            bash -c 'maestro test .maestro-smoke --format junit --output "$PWD/.maestro-results/junit.xml" --debug-output "$PWD/.maestro-debug" --test-output-dir "$PWD/.maestro-artifacts" --flatten-debug-output; test_status=$?; adb logcat -d > .maestro-results/logcat.txt; exit "$test_status"'
 
       - name: Upload Maestro artifacts
         uses: actions/upload-artifact@v4

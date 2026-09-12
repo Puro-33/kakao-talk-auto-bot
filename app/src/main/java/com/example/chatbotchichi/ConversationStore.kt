@@ -40,8 +40,14 @@ object ConversationStore {
     private var maintenance: java.util.concurrent.ScheduledFuture<*>? = null
     private val refreshTasks = mutableMapOf<String, java.util.concurrent.ScheduledFuture<*>>()
     private val revisions = mutableMapOf<String, Long>()
+    private var privacyRevision = 0L
 
     @Synchronized fun revision(roomId: String): Long = revisions.getOrDefault(roomId, 0L)
+    @Synchronized fun replyRevision(roomId: String): Pair<Long, Long> = privacyRevision to revision(roomId)
+    @Synchronized fun <T> withReplyRevision(roomId: String, expected: Pair<Long, Long>, action: () -> T): T? {
+        if (replyRevision(roomId) != expected) return null
+        return action()
+    }
     private fun invalidate(roomId: String) { revisions[roomId] = revision(roomId) + 1 }
 
     @Synchronized private fun database(context: Context): SQLiteDatabase {
@@ -218,10 +224,10 @@ object ConversationStore {
         }.reversed() }
     }
 
-    @Synchronized fun profiles(context: Context, roomId: String): Pair<ConversationStyleProfile, ConversationStyleProfile> {
+    @Synchronized fun profiles(context: Context, roomId: String, refresh: Boolean = true): Pair<ConversationStyleProfile, ConversationStyleProfile> {
         val db = database(context)
         val id = resolveLegacy(db, roomId)
-        refreshDirty(db)
+        if (refresh) refreshDirty(db)
         val own = readProfile(db, "$id:own").takeIf { it.usable } ?: readProfile(db, GLOBAL)
         return own to readProfile(db, "$id:room")
     }
@@ -255,6 +261,7 @@ object ConversationStore {
         }
         AutoMemoryStore.clear(context, id)
         invalidate(id)
+        privacyRevision++ // Other rooms may have used this room's samples through the global own profile.
         LogStore.clear(context)
         refreshDirty(db)
     }
@@ -324,8 +331,10 @@ object ConversationStore {
     }
 
     private fun dirty(db: SQLiteDatabase, roomId: String) {
-        for (key in listOf("$roomId:own", "$roomId:room", GLOBAL)) db.insertWithOnConflict("profiles", null,
-            ContentValues().apply { put("profile_key", key); put("dirty", 1) }, SQLiteDatabase.CONFLICT_REPLACE)
+        for (key in listOf("$roomId:own", "$roomId:room", GLOBAL)) {
+            db.insertWithOnConflict("profiles", null, ContentValues().apply { put("profile_key", key) }, SQLiteDatabase.CONFLICT_IGNORE)
+            db.update("profiles", ContentValues().apply { put("dirty", 1) }, "profile_key=?", arrayOf(key))
+        }
     }
 
     private fun prune(db: SQLiteDatabase, now: Long, force: Boolean = false) {
@@ -337,6 +346,7 @@ object ConversationStore {
             db.delete("imports", "imported_at<?", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
             db.execSQL("DELETE FROM participants WHERE NOT EXISTS (SELECT 1 FROM messages WHERE messages.room_id=participants.room_id AND messages.sender=participants.name)")
             rooms.forEach { dirty(db, it) }
+            if (rooms.isNotEmpty()) privacyRevision++
         }
         lastPrunedAt = now
     }

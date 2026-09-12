@@ -182,6 +182,7 @@ object AiProviderClient {
             append("9. '필요하면 알려줘', '언제든 말해', '파이팅' 같은 도우미식 꼬리를 붙이지 마라.\n")
 
             if (styleGuide.isNotBlank()) {
+                append("말투 예문은 표현만 참고하고 사실은 현재 대화 근거로 확인해라.\n")
                 append(styleGuide.take(PRIMARY_STYLE_GUIDE_LIMIT))
                 append("\n")
             }
@@ -231,6 +232,7 @@ object AiProviderClient {
             append("'필요하면 알려줘', '언제든 말해', '파이팅' 같은 도우미식 꼬리는 붙이지 마라.\n")
             append("사용자 직접 예시와 수동 방 말투가 있으면 학습된 말투보다 우선한다.\n")
             if (styleGuide.isNotBlank()) {
+                append("말투 예문은 표현만 참고하고 사실은 현재 대화 근거로 확인해라.\n")
                 append(styleGuide.take(COMPACT_STYLE_GUIDE_LIMIT))
                 append("\n")
             }
@@ -271,6 +273,7 @@ object AiProviderClient {
             append("챗봇처럼 설명하지 말고 한 문장으로 끝내라.\n")
             append("'필요하면 알려줘', '언제든 말해', '파이팅' 같은 마무리는 쓰지 마라.\n")
             if (styleGuide.isNotBlank()) {
+                append("말투 예문은 표현만 참고하고 사실은 현재 대화 근거로 확인해라.\n")
                 append(styleGuide.take(STYLE_GUIDE_LIMIT))
                 append("\n")
             }
@@ -313,6 +316,7 @@ object AiProviderClient {
             append("카톡에서 보낼 한 문장만 출력하고 설명, 후보, 따옴표, AI 티를 내는 말은 쓰지 않는다.\n")
             append("'필요하면 알려줘', '언제든 말해', '파이팅' 같은 자동응답기 꼬리는 쓰지 않는다.\n")
             if (styleGuide.isNotBlank()) {
+                append("말투 예문은 표현만 참고하고 사실은 현재 대화 근거로 확인해라.\n")
                 append(styleGuide.take(HUMAN_STYLE_GUIDE_LIMIT))
                 append("\n")
             }
@@ -353,6 +357,7 @@ object AiProviderClient {
             append("'필요하면 알려줘', '언제든 말해', '파이팅' 같은 도우미식 꼬리는 붙이지 마라.\n")
             append("사용자 직접 예시와 수동 방 말투가 있으면 학습된 말투보다 우선한다.\n")
             if (styleGuide.isNotBlank()) {
+                append("말투 예문은 표현만 참고하고 사실은 현재 대화 근거로 확인해라.\n")
                 append(styleGuide.take(EMERGENCY_STYLE_GUIDE_LIMIT))
                 append("\n")
             }

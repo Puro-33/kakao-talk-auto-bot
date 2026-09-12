@@ -107,7 +107,7 @@ object StyleProfileStore {
         history: List<RoomHistoryMessage>,
         conversationId: String = room
     ): String {
-        val profiles = ConversationStore.profiles(context, conversationId)
+        val profiles = ConversationStore.profiles(context, conversationId, refresh = false)
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val learnedUserState = stateFromProfile(profiles.first,
             prefs.getBoolean(KEY_USER_LEARNED_ENABLED, true), prefs.getString(KEY_USER_LEARNED_OVERRIDE, "").orEmpty())
@@ -225,10 +225,6 @@ object StyleProfileStore {
         return buildString {
             append("말투/스타일 지침:\n")
             append("- 말투 우선순위: 사용자 직접 예시 > 수동 방 스타일 > 이 방의 내 말투 > 전체 내 말투 > 자동 방 스타일.\n")
-            append("- 말투 예문은 문장 형식만 참고한다. 예문 속 날짜, 이름, 장소, 약속을 현재 사실로 사용하지 않는다. 사실은 현재 질문과 관련된 방 메모와 최근 대화에서 따로 확인한다.\n")
-            append("- 답장할지 여부는 트리거 모드를 따르되, 답장을 만들 때는 위 우선순위의 말투를 먼저 따른다.\n")
-            append("- 학습 말투 신뢰도가 낮으면 확정 규칙처럼 따르지 말고 수동 예시와 현재 방 맥락을 우선한다.\n")
-            append("- 보조 힌트로 표시된 학습 말투가 사용자 직접 예시나 수동 방 스타일과 충돌하면 반드시 버린다.\n")
             if (userExamples.isNotBlank()) {
                 append("사용자 직접 예시:\n")
                 append(userExamples)
@@ -265,6 +261,10 @@ object StyleProfileStore {
                 append(learnedRoomStyle)
                 append("\n")
             }
+            append("- 말투 예문은 문장 형식만 참고한다. 예문 속 날짜, 이름, 장소, 약속을 현재 사실로 사용하지 않는다. 사실은 현재 질문과 관련된 방 메모와 최근 대화에서 따로 확인한다.\n")
+            append("- 답장할지 여부는 트리거 모드를 따르되, 답장을 만들 때는 위 우선순위의 말투를 먼저 따른다.\n")
+            append("- 학습 말투 신뢰도가 낮으면 확정 규칙처럼 따르지 말고 수동 예시와 현재 방 맥락을 우선한다.\n")
+            append("- 보조 힌트로 표시된 학습 말투가 사용자 직접 예시나 수동 방 스타일과 충돌하면 반드시 버린다.\n")
         }.trim()
     }
 

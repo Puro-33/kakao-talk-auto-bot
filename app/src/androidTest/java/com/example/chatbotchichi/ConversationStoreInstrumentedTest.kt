@@ -138,8 +138,8 @@ class ConversationStoreInstrumentedTest {
         assertTrue(ConversationStore.profiles(context, room).first.usable)
         val expiredAt = System.currentTimeMillis() - ConversationStyleAnalyzer.RETENTION_MS - day
         SQLiteDatabase.openDatabase(context.getDatabasePath("conversations.db").path, null, SQLiteDatabase.OPEN_READWRITE).use {
-            it.execSQL("UPDATE messages SET sent_at=? WHERE room_id=?", arrayOf(expiredAt, room))
-            it.execSQL("UPDATE imports SET imported_at=? WHERE room_id=?", arrayOf(expiredAt, room))
+            it.execSQL("UPDATE messages SET sent_at=? WHERE room_id=?", arrayOf<Any>(expiredAt, room))
+            it.execSQL("UPDATE imports SET imported_at=? WHERE room_id=?", arrayOf<Any>(expiredAt, room))
         }
         ConversationStore.maintain(context)
         for (table in listOf("messages", "participants", "imports")) assertEquals(table, 0, count(table, room))
@@ -202,7 +202,8 @@ class ConversationStoreInstrumentedTest {
             for (table in listOf("conversations", "messages", "participants", "migrations", "profiles")) {
                 db.rawQuery("SELECT COUNT(*) FROM $table", null).use {
                     it.moveToFirst()
-                    assertEquals("$table must roll back with the failed migration", 0, it.getInt(0))
+                    // Initialization already committed the independent legacy-log cleanup marker.
+                    assertEquals("$table must roll back with the failed migration", if (table == "migrations") 1 else 0, it.getInt(0))
                 }
             }
             db.execSQL("DROP TRIGGER fixture_fail_migration")
@@ -237,9 +238,14 @@ class ConversationStoreInstrumentedTest {
         ConversationStore.importExport(context, retained, ownExport("응ㅋㅋ"), "본인")
         val previousDeleted = ConversationStore.revision(deleted)
         val previousRetained = ConversationStore.revision(retained)
+        val previousReply = ConversationStore.replyRevision(retained)
         ConversationStore.deleteLearningData(context, deleted)
         assertTrue(ConversationStore.revision(deleted) > previousDeleted)
         assertEquals(previousRetained, ConversationStore.revision(retained))
+        assertNotEquals(previousReply, ConversationStore.replyRevision(retained))
+        var sent = false
+        ConversationStore.withReplyRevision(retained, previousReply) { sent = true }
+        assertFalse("A reply using the deleted room's global style must be discarded", sent)
         assertTrue(ConversationStore.recentMessages(context, deleted).isEmpty())
     }
 

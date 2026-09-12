@@ -56,10 +56,10 @@ object AutoReplyEngine {
             return
         }
 
-        val revision = ConversationStore.revision(conversationId)
+        val revision = ConversationStore.replyRevision(conversationId)
         replyScope.launch {
             mutexForRoom(conversationId).withLock {
-                if (revision != ConversationStore.revision(conversationId)) return@withLock
+                if (revision != ConversationStore.replyRevision(conversationId)) return@withLock
                 val history = RoomStore.recentMessages(context, conversationId, limit = 40).let { messages ->
                     if (messages.isNotEmpty()) {
                         val last = messages.last()
@@ -83,9 +83,11 @@ object AutoReplyEngine {
                 }
                 when {
                     !resolution.reply.isNullOrBlank() -> {
-                        if (revision != ConversationStore.revision(conversationId) || !AppSettings.isAiReplyEnabled(context) ||
+                        if (!AppSettings.isAiReplyEnabled(context) ||
                             BotManager.findMatchingConfig(context, room, sender, message, isGroupChat)?.replyEnabled != true) return@withLock
-                        val sendResult = replier.replyToRoomDetailed(conversationId, resolution.reply)
+                        val sendResult = ConversationStore.withReplyRevision(conversationId, revision) {
+                            replier.replyToRoomDetailed(conversationId, resolution.reply)
+                        } ?: return@withLock
                         if (!sendResult.sent) {
                             val reason = "AI 답장은 생성됐지만 카카오톡 전송에 실패했습니다."
                             val detail = sendResult.reason ?: "unknown"
