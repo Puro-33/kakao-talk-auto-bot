@@ -3,4 +3,14 @@
     <string name="room_selection_overlay_select">현재 방 선택</string>
     <string name="room_selection_overlay_cancel">취소</string>
     <string name="room_selection_overlay_no_chat">대화방 제목을 확인하지 못했습니다. 원하는 대화방을 열고 다시 선택하세요.</string>
+    <string name="room_selection_overlay_window_unavailable">현재 선택할 앱 창을 하나로 확인하지 못했습니다. 카카오톡 대화방을 전체 화면으로 열고 다시 선택하세요.</string>
+    <string name="room_selection_overlay_root_unavailable">현재 창의 접근성 정보를 받지 못했습니다. 잠시 기다렸다가 다시 선택하세요.</string>
+    <string name="room_selection_overlay_wrong_app">현재 화면이 카카오톡 대화방인지 확인하지 못했습니다. 카카오톡으로 돌아가 다시 선택하세요.</string>
+    <string name="room_selection_overlay_hidden">대화방 화면의 필요한 항목이 보이지 않습니다. 가리는 창을 닫고 다시 선택하세요.</string>
+    <string name="room_selection_overlay_ambiguous">대화방 화면의 항목이 여러 개 감지되었습니다. 원하는 대화방 하나를 열고 다시 선택하세요.</string>
+    <string name="room_selection_overlay_chat_missing">대화 목록 영역을 확인하지 못했습니다. 채팅방 목록에서 원하는 대화방 안으로 들어가 주세요.</string>
+    <string name="room_selection_overlay_input_missing">메시지 입력 영역을 확인하지 못했습니다. 대화방 화면을 연 뒤 다시 선택하세요.</string>
+    <string name="room_selection_overlay_toolbar_missing">대화방 상단 제목 영역을 확인하지 못했습니다. 대화방 화면에서 다시 선택하세요.</string>
+    <string name="room_selection_overlay_title_missing">상단 영역에서 방 이름 항목을 찾지 못했습니다. 카카오톡 화면 구조가 달라졌을 수 있습니다.</string>
+    <string name="room_selection_overlay_title_invalid">확인한 방 이름이 비어 있거나 너무 깁니다. 방 이름을 확인한 뒤 다시 선택하세요.</string>
 </resources>

@@ -8,16 +8,23 @@ class RoomTitleSelectionTest {
     private class Node(
         override val packageName: String? = "com.kakao.talk",
         override val visible: Boolean = true,
-        private val title: String? = null
+        private val title: String? = null,
+        private val allowText: Boolean = title != null,
+        private val queryFailure: Boolean = false,
+        private val textFailure: Boolean = false
     ) : RoomTitleNode {
         var textReads = 0
         override val text: CharSequence? get() {
-            check(title != null) { "Only the title node may have its text read" }
             textReads++
+            check(allowText) { "Only the title node may have its text read" }
+            check(!textFailure) { "Title node became unavailable" }
             return title
         }
         val nodes = mutableMapOf<String, List<RoomTitleNode>>()
-        override fun findById(id: String) = nodes[id].orEmpty()
+        override fun findById(id: String): List<RoomTitleNode> {
+            check(!queryFailure) { "Window became unavailable" }
+            return nodes[id].orEmpty()
+        }
         fun put(id: String, vararg children: RoomTitleNode) { nodes["com.kakao.talk:id/$id"] = children.toList() }
     }
 
@@ -72,5 +79,74 @@ class RoomTitleSelectionTest {
     @Test fun blankAndOversizedTitlesAreRejected() {
         assertNull(RoomTitleSelection.read(chat(Node(title = "  "))))
         assertNull(RoomTitleSelection.read(chat(Node(title = "x".repeat(513)))))
+    }
+
+    private fun assertNoTextRead(root: Node) {
+        assertEquals("Unexpected text access on structural node", 0, root.textReads)
+        root.nodes.values.flatten().forEach { assertNoTextRead(it as Node) }
+    }
+
+    @Test fun rootFailuresHaveDistinctReasonsWithoutReadingText() {
+        assertEquals(RoomTitleReadFailure.ROOT_UNAVAILABLE, RoomTitleSelection.diagnose(null).failure)
+        val foreign = Node(packageName = "other.app")
+        val hidden = Node(visible = false)
+        assertEquals(RoomTitleReadFailure.NOT_KAKAO, RoomTitleSelection.diagnose(foreign).failure)
+        assertEquals(RoomTitleReadFailure.ROOT_HIDDEN, RoomTitleSelection.diagnose(hidden).failure)
+        assertNoTextRead(foreign)
+        assertNoTextRead(hidden)
+    }
+
+    @Test fun everyStructuralStageSeparatesMissingDuplicateForeignAndHidden() {
+        val stages = listOf(
+            "chat_log_recycler_list" to "CHAT_LOG",
+            "input_window_layout" to "INPUT",
+            "toolbar_default_title_layout" to "TOOLBAR",
+            "toolbar_default_title_text" to "TITLE"
+        )
+        for ((id, prefix) in stages) {
+            val faults = listOf(
+                "MISSING" to emptyList(),
+                "AMBIGUOUS" to listOf(Node(), Node(visible = false)),
+                "NOT_KAKAO" to listOf(Node(packageName = "other.app")),
+                "HIDDEN" to listOf(Node(visible = false))
+            )
+            for ((suffix, replacement) in faults) {
+                val title = Node(title = "Must stay unread")
+                val root = chat(title)
+                val parent = if (prefix == "TITLE") {
+                    root.nodes.getValue("com.kakao.talk:id/toolbar_default_title_layout").single() as Node
+                } else root
+                parent.nodes["com.kakao.talk:id/$id"] = replacement
+                val result = RoomTitleSelection.diagnose(root)
+                assertEquals("$prefix $suffix", RoomTitleReadFailure.valueOf("${prefix}_$suffix"), result.failure)
+                assertNull(result.title)
+                assertNoTextRead(root)
+                assertEquals(0, title.textReads)
+            }
+        }
+    }
+
+    @Test fun unavailableNodesFailClosedWithoutFallbackTextSearch() {
+        val root = Node(queryFailure = true)
+        assertEquals(RoomTitleReadFailure.NODE_UNAVAILABLE, RoomTitleSelection.diagnose(root).failure)
+        assertNoTextRead(root)
+        val title = Node(title = "Hidden by failure", textFailure = true)
+        val result = RoomTitleSelection.diagnose(chat(title))
+        assertEquals(RoomTitleReadFailure.NODE_UNAVAILABLE, result.failure)
+        assertNull(result.title)
+        assertEquals(1, title.textReads)
+    }
+
+    @Test fun invalidTitleValuesShareContentFreeFailureAndLengthBoundaryIsAccepted() {
+        for (value in listOf(null, "", "  ", "x".repeat(513))) {
+            val title = Node(title = value, allowText = true)
+            val result = RoomTitleSelection.diagnose(chat(title))
+            assertEquals(RoomTitleReadFailure.TITLE_EMPTY_OR_TOO_LONG, result.failure)
+            assertNull(result.title)
+            assertEquals(1, title.textReads)
+        }
+        val valid = RoomTitleSelection.diagnose(chat(Node(title = "x".repeat(512))))
+        assertEquals("x".repeat(512), valid.title)
+        assertNull(valid.failure)
     }
 }

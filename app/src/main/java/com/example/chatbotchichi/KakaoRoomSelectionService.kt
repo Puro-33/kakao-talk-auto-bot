@@ -3,13 +3,16 @@ package com.example.kakaotalkautobot
 import android.accessibilityservice.AccessibilityService
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.graphics.PixelFormat
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.view.Gravity
 import android.view.View
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityWindowInfo
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -21,6 +24,7 @@ class KakaoRoomSelectionService : AccessibilityService() {
     private var overlay: View? = null
     private var overlayToken: String? = null
     private var kakaoWindowShown = false
+    private var pendingReadToken: String? = null
     private val expiryCheck = object : Runnable {
         override fun run() {
             val token = overlayToken ?: return
@@ -46,11 +50,13 @@ class KakaoRoomSelectionService : AccessibilityService() {
                 // Ignore our overlay's widget event, but hide when an app activity returns.
                 if (event.className?.toString()?.startsWith("$packageName.") == true) {
                     kakaoWindowShown = false
+                    pendingReadToken = null
                     hideOverlay()
                 }
             }
             else -> {
                 kakaoWindowShown = false
+                pendingReadToken = null
                 hideOverlay()
             }
         }
@@ -58,6 +64,7 @@ class KakaoRoomSelectionService : AccessibilityService() {
 
     private fun showOverlay(token: String, messageResource: Int = R.string.room_selection_overlay_instruction) {
         if (!RoomSelectionSession.isActive(token)) return
+        if (pendingReadToken != null) return
         if (overlay != null && overlayToken == token) return
         hideOverlay()
         val status = TextView(this).apply {
@@ -110,32 +117,78 @@ class KakaoRoomSelectionService : AccessibilityService() {
     }
 
     private fun selectCurrentRoom(token: String) {
+        trace("SELECTION_REQUESTED")
         if (!RoomSelectionSession.isActive(token)) {
             hideOverlay()
             return
         }
         // Remove the just-touched overlay before querying the underlying active Kakao window.
         hideOverlay()
-        handler.post { readSelectedRoom(token) }
+        pendingReadToken = token
+        handler.postDelayed({
+            if (pendingReadToken == token) {
+                pendingReadToken = null
+                readSelectedRoom(token)
+            } else {
+                trace("SELECTION_READ_CANCELLED")
+            }
+        }, 150)
     }
 
     private fun readSelectedRoom(token: String) {
         if (!RoomSelectionSession.isActive(token)) return
-        val root = rootInActiveWindow
-        val title = if (root?.packageName?.toString() == "com.kakao.talk") {
-            runCatching { KakaoChatTitleReader.read(root) }.getOrNull()
-        } else null
+        if (!kakaoWindowShown) return
+        val visibleWindows = try { windows } catch (_: RuntimeException) {
+            reportFailure(token, "WINDOWS_UNAVAILABLE", R.string.room_selection_overlay_window_unavailable)
+            return
+        }
+        // Select the current application window first, then inspect only that root's package.
+        // Never search background windows for Kakao after finding another foreground app.
+        val applications = visibleWindows.filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
+        val active = applications.filter { it.isActive }
+        val candidates = active.ifEmpty { applications.filter { it.isFocused } }
+        if (candidates.size != 1) {
+            reportFailure(token, if (candidates.isEmpty()) "NO_CURRENT_APPLICATION" else "AMBIGUOUS_CURRENT_APPLICATION",
+                R.string.room_selection_overlay_window_unavailable)
+            return
+        }
+        val root = try { candidates.single().root } catch (_: RuntimeException) {
+            reportFailure(token, "WINDOW_ROOT_EXCEPTION", R.string.room_selection_overlay_root_unavailable)
+            return
+        }
+        if (root == null) {
+            reportFailure(token, "WINDOW_ROOT_UNAVAILABLE", R.string.room_selection_overlay_root_unavailable)
+            return
+        }
+        if (root.packageName?.toString() != "com.kakao.talk") {
+            kakaoWindowShown = false
+            reportFailure(token, "CURRENT_APPLICATION_NOT_KAKAO", R.string.room_selection_overlay_wrong_app)
+            return
+        }
+        val result = KakaoChatTitleReader.diagnose(root)
+        val title = result.title
         if (title.isNullOrBlank()) {
-            // Do not re-display over another app if the user switched while the read was queued.
-            if (root?.packageName?.toString() == "com.kakao.talk" || (root == null && kakaoWindowShown)) {
-                showOverlay(token, R.string.room_selection_overlay_no_chat)
+            val code = result.failure?.name ?: "UNKNOWN_TITLE_FAILURE"
+            val message = when {
+                code == "ROOT_UNAVAILABLE" || code == "NODE_UNAVAILABLE" -> R.string.room_selection_overlay_root_unavailable
+                code.endsWith("NOT_KAKAO") -> R.string.room_selection_overlay_wrong_app
+                code.endsWith("HIDDEN") -> R.string.room_selection_overlay_hidden
+                code.endsWith("AMBIGUOUS") -> R.string.room_selection_overlay_ambiguous
+                code == "CHAT_LOG_MISSING" -> R.string.room_selection_overlay_chat_missing
+                code == "INPUT_MISSING" -> R.string.room_selection_overlay_input_missing
+                code == "TOOLBAR_MISSING" -> R.string.room_selection_overlay_toolbar_missing
+                code == "TITLE_MISSING" -> R.string.room_selection_overlay_title_missing
+                code == "TITLE_EMPTY_OR_TOO_LONG" -> R.string.room_selection_overlay_title_invalid
+                else -> R.string.room_selection_overlay_no_chat
             }
+            reportFailure(token, code, message)
             return
         }
         if (!RoomSelectionSession.select(token, title)) {
             hideOverlay()
             return
         }
+        trace("SELECTION_READY")
         try {
             startActivity(Intent(this, RoomSelectionActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -144,6 +197,18 @@ class KakaoRoomSelectionService : AccessibilityService() {
             // Keep the result for explicit confirmation after returning to the app manually.
         } catch (_: SecurityException) {
             // Some devices restrict background launches; manual return remains available.
+        }
+    }
+
+    private fun reportFailure(token: String, code: String, messageResource: Int) {
+        trace(code)
+        if (kakaoWindowShown) showOverlay(token, messageResource)
+    }
+
+    private fun trace(code: String) {
+        if (applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            // Fixed diagnostic codes only: never titles, node text, packages or exception messages.
+            Log.d("RoomSelection", code)
         }
     }
 
@@ -161,9 +226,13 @@ class KakaoRoomSelectionService : AccessibilityService() {
         }
     }
 
-    override fun onInterrupt() { hideOverlay() }
+    override fun onInterrupt() {
+        pendingReadToken = null
+        hideOverlay()
+    }
 
     override fun onDestroy() {
+        pendingReadToken = null
         hideOverlay()
         RoomSelectionSession.cancelCurrent()
         super.onDestroy()
