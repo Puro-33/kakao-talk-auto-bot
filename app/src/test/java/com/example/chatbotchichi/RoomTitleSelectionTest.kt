@@ -11,14 +11,24 @@ class RoomTitleSelectionTest {
         private val title: String? = null,
         private val allowText: Boolean = title != null,
         private val queryFailure: Boolean = false,
-        private val textFailure: Boolean = false
+        private val textFailure: Boolean = false,
+        private val description: String? = null,
+        private val allowDescription: Boolean = allowText,
+        private val descriptionFailure: Boolean = false
     ) : RoomTitleNode {
         var textReads = 0
+        var descriptionReads = 0
         override val text: CharSequence? get() {
             textReads++
             check(allowText) { "Only the title node may have its text read" }
             check(!textFailure) { "Title node became unavailable" }
             return title
+        }
+        override val contentDescription: CharSequence? get() {
+            descriptionReads++
+            check(allowDescription) { "Only the verified title node may have its description read" }
+            check(!descriptionFailure) { "Title description became unavailable" }
+            return description
         }
         val nodes = mutableMapOf<String, List<RoomTitleNode>>()
         override fun findById(id: String): List<RoomTitleNode> {
@@ -38,6 +48,7 @@ class RoomTitleSelectionTest {
         val title = Node(title = "  Selected room  ")
         assertEquals("Selected room", RoomTitleSelection.read(chat(title)))
         assertEquals(1, title.textReads)
+        assertEquals(0, title.descriptionReads)
     }
 
     @Test fun listAndSearchToolbarsCannotSelectARoom() {
@@ -47,6 +58,7 @@ class RoomTitleSelectionTest {
         val search = chat(title).apply { nodes.remove("com.kakao.talk:id/input_window_layout") }
         assertNull(RoomTitleSelection.read(search))
         assertEquals(0, title.textReads)
+        assertEquals(0, title.descriptionReads)
     }
 
     @Test fun foreignHiddenAndMissingWindowsAreRejected() {
@@ -64,6 +76,7 @@ class RoomTitleSelectionTest {
         assertNull(RoomTitleSelection.read(chat().apply { put("toolbar_default_title_layout", toolbar) }))
         assertNull(RoomTitleSelection.read(chat().apply { put("toolbar_default_title_layout", toolbar, Node()) }))
         assertEquals(0, a.textReads + b.textReads)
+        assertEquals(0, a.descriptionReads + b.descriptionReads)
     }
 
     @Test fun titleOutsideVerifiedToolbarIsIgnored() {
@@ -74,6 +87,7 @@ class RoomTitleSelectionTest {
         }
         assertNull(RoomTitleSelection.read(root))
         assertEquals(0, misplaced.textReads)
+        assertEquals(0, misplaced.descriptionReads)
     }
 
     @Test fun blankAndOversizedTitlesAreRejected() {
@@ -83,6 +97,7 @@ class RoomTitleSelectionTest {
 
     private fun assertNoTextRead(root: Node) {
         assertEquals("Unexpected text access on structural node", 0, root.textReads)
+        assertEquals("Unexpected description access on structural node", 0, root.descriptionReads)
         root.nodes.values.flatten().forEach { assertNoTextRead(it as Node) }
     }
 
@@ -122,6 +137,7 @@ class RoomTitleSelectionTest {
                 assertNull(result.title)
                 assertNoTextRead(root)
                 assertEquals(0, title.textReads)
+                assertEquals(0, title.descriptionReads)
             }
         }
     }
@@ -135,16 +151,63 @@ class RoomTitleSelectionTest {
         assertEquals(RoomTitleReadFailure.NODE_UNAVAILABLE, result.failure)
         assertNull(result.title)
         assertEquals(1, title.textReads)
+        assertEquals(0, title.descriptionReads)
+        val missingDescription = Node(title = "", descriptionFailure = true)
+        val unavailable = RoomTitleSelection.diagnose(chat(missingDescription))
+        assertEquals(RoomTitleReadFailure.NODE_UNAVAILABLE, unavailable.failure)
+        assertNull(unavailable.title)
+        assertEquals(1, missingDescription.descriptionReads)
     }
 
-    @Test fun invalidTitleValuesShareContentFreeFailureAndLengthBoundaryIsAccepted() {
-        for (value in listOf(null, "", "  ", "x".repeat(513))) {
-            val title = Node(title = value, allowText = true)
+    @Test fun nullOrBlankTextUsesOnlyTheVerifiedTitleDescription() {
+        for (value in listOf(null, "", "  ")) {
+            val title = Node(title = value, allowText = true, description = "  Selected room  ")
             val result = RoomTitleSelection.diagnose(chat(title))
-            assertEquals(RoomTitleReadFailure.TITLE_EMPTY_OR_TOO_LONG, result.failure)
-            assertNull(result.title)
+            assertEquals("Selected room", result.title)
+            assertNull(result.failure)
             assertEquals(1, title.textReads)
+            assertEquals(1, title.descriptionReads)
         }
+    }
+
+    @Test fun validTextTakesPriorityWithoutAccessingDescription() {
+        val title = Node(title = "  Visible title  ", description = "Other title", descriptionFailure = true)
+        assertEquals("Visible title", RoomTitleSelection.read(chat(title)))
+        assertEquals(1, title.textReads)
+        assertEquals(0, title.descriptionReads)
+    }
+
+    @Test fun oversizedNonblankTextRejectsWithoutDescriptionFallbackOrTruncation() {
+        val title = Node(title = "x".repeat(513), description = "Short title", descriptionFailure = true)
+        val result = RoomTitleSelection.diagnose(chat(title))
+        assertNull(result.title)
+        assertEquals(RoomTitleReadFailure.TITLE_TOO_LONG, result.failure)
+        assertEquals(0, title.descriptionReads)
+    }
+
+    @Test fun bothEmptyTitleSourcesProduceEmptyFailure() {
+        for (text in listOf(null, "", "  ")) {
+            for (description in listOf(null, "", "  ")) {
+                val title = Node(title = text, allowText = true, description = description)
+                val result = RoomTitleSelection.diagnose(chat(title))
+                assertEquals(RoomTitleReadFailure.TITLE_EMPTY, result.failure)
+                assertNull(result.title)
+                assertEquals(1, title.textReads)
+                assertEquals(1, title.descriptionReads)
+            }
+        }
+    }
+
+    @Test fun descriptionUsesTheSameLengthLimitAsText() {
+        val valid = RoomTitleSelection.diagnose(chat(Node(title = "", description = "x".repeat(512))))
+        assertEquals("x".repeat(512), valid.title)
+        assertNull(valid.failure)
+        val tooLong = RoomTitleSelection.diagnose(chat(Node(title = "", description = "x".repeat(513))))
+        assertEquals(RoomTitleReadFailure.TITLE_TOO_LONG, tooLong.failure)
+        assertNull(tooLong.title)
+    }
+
+    @Test fun textLengthBoundaryIsAccepted() {
         val valid = RoomTitleSelection.diagnose(chat(Node(title = "x".repeat(512))))
         assertEquals("x".repeat(512), valid.title)
         assertNull(valid.failure)

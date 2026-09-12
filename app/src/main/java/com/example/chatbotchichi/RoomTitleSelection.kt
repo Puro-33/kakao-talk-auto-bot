@@ -1,10 +1,11 @@
 package com.example.kakaotalkautobot
 
-/** Minimal window interface: only the verified title node's text is accessed. */
+/** Only the verified title node's text or, if blank, its own description is accessed. */
 internal interface RoomTitleNode {
     val packageName: String?
     val visible: Boolean
     val text: CharSequence?
+    val contentDescription: CharSequence?
     fun findById(id: String): List<RoomTitleNode>
 }
 
@@ -15,7 +16,7 @@ internal enum class RoomTitleReadFailure {
     INPUT_MISSING, INPUT_AMBIGUOUS, INPUT_NOT_KAKAO, INPUT_HIDDEN,
     TOOLBAR_MISSING, TOOLBAR_AMBIGUOUS, TOOLBAR_NOT_KAKAO, TOOLBAR_HIDDEN,
     TITLE_MISSING, TITLE_AMBIGUOUS, TITLE_NOT_KAKAO, TITLE_HIDDEN,
-    TITLE_EMPTY_OR_TOO_LONG, NODE_UNAVAILABLE
+    TITLE_EMPTY, TITLE_TOO_LONG, NODE_UNAVAILABLE
 }
 
 internal data class RoomTitleReadResult(val title: String?, val failure: RoomTitleReadFailure?) {
@@ -77,11 +78,12 @@ internal object RoomTitleSelection {
         unique(root, Part.INPUT) ?: return failed(checkNotNull(failure))
         val toolbar = unique(root, Part.TOOLBAR) ?: return failed(checkNotNull(failure))
         val title = unique(toolbar, Part.TITLE) ?: return failed(checkNotNull(failure))
-        // This is the only text accessor: every structural/package/visibility guard passed.
-        val value = title.text?.toString()?.trim()
-        if (value.isNullOrEmpty() || value.length > 512) {
-            return failed(RoomTitleReadFailure.TITLE_EMPTY_OR_TOO_LONG)
-        }
+        // All guards passed. Kakao may label this exact title node via its description.
+        // Never inspect descriptions elsewhere or use them to replace oversized nonblank text.
+        val text = title.text?.toString()?.trim()
+        val value = if (text.isNullOrEmpty()) title.contentDescription?.toString()?.trim() else text
+        if (value.isNullOrEmpty()) return failed(RoomTitleReadFailure.TITLE_EMPTY)
+        if (value.length > 512) return failed(RoomTitleReadFailure.TITLE_TOO_LONG)
         return RoomTitleReadResult(value, null)
     }
 }

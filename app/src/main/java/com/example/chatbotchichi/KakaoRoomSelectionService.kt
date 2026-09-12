@@ -178,7 +178,8 @@ class KakaoRoomSelectionService : AccessibilityService() {
                 code == "INPUT_MISSING" -> R.string.room_selection_overlay_input_missing
                 code == "TOOLBAR_MISSING" -> R.string.room_selection_overlay_toolbar_missing
                 code == "TITLE_MISSING" -> R.string.room_selection_overlay_title_missing
-                code == "TITLE_EMPTY_OR_TOO_LONG" -> R.string.room_selection_overlay_title_invalid
+                code == "TITLE_EMPTY" -> R.string.room_selection_overlay_title_empty
+                code == "TITLE_TOO_LONG" -> R.string.room_selection_overlay_title_too_long
                 else -> R.string.room_selection_overlay_no_chat
             }
             reportFailure(token, code, message)

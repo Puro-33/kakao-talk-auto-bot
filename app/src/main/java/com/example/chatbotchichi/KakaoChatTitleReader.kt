@@ -12,6 +12,7 @@ internal object KakaoChatTitleReader {
         override val packageName: String? get() = node.packageName?.toString()
         override val visible: Boolean get() = node.isVisibleToUser
         override val text: CharSequence? get() = node.text
+        override val contentDescription: CharSequence? get() = node.contentDescription
         override fun findById(id: String): List<RoomTitleNode> =
             node.findAccessibilityNodeInfosByViewId(id).orEmpty().map(::Node)
     }
