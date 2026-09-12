@@ -29,6 +29,7 @@ maestro test .maestro
 - 정적 품질 검사는 `lintDebug` 를 기본 게이트로 사용합니다.
 - 실제 사용자 흐름 검증은 Maestro 에뮬레이터 테스트가 맡습니다.
 - 설정 안내처럼 문구가 추가될 수 있는 요소의 존재 검사는 리소스 ID를 사용합니다. `settings.yaml`은 `text_provider_summary`를 검사하며, 정확한 문구 자체를 검증하는 테스트는 아닙니다.
+- 섹션 제목이 보이더라도 바로 아래 항목이 화면 밖에 있을 수 있습니다. `settings.yaml`은 `로컬 응답 엔진`도 별도로 스크롤한 뒤 표시를 검사합니다.
 - `room-management.yaml`은 `debug_room_scroll`로 방 메모리 화면 진입을 확인한 뒤 바로 스크롤합니다. 이 위치에 `hideKeyboard`를 넣으면 키보드가 없을 때 뒤로가기로 동작할 수 있으므로 호출하지 않습니다.
 - 릴리즈 태그는 테스트, lint, APK 빌드 검증이 끝난 뒤에만 signed release APK를 게시합니다.
 - GitHub-hosted 에뮬레이터가 불안정할 때는 Maestro를 수동 실행으로 두고, CI 게이트는 JVM 테스트/lint/APK 빌드 중심으로 유지합니다.

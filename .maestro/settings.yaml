@@ -16,6 +16,10 @@ appId: com.example.kakaotalkautobot
       text: "응답 엔진"
     direction: DOWN
 - assertVisible: "응답 엔진"
+- scrollUntilVisible:
+    element:
+      text: "로컬 응답 엔진"
+    direction: DOWN
 - assertVisible: "로컬 응답 엔진"
 - scrollUntilVisible:
     element:
