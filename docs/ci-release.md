@@ -67,7 +67,7 @@
 
 ## 빌드 도구와 품질 게이트
 
-AGP 9.4.0, Gradle 9.6.0, AGP 내장 Kotlin, compile/target SDK 37을 사용합니다. CI JDK는 21, 앱 바이트코드 대상은 11입니다. 의존성은 gradle/libs.versions.toml에 고정하며 LiteRT-LM은 0.17.0입니다. org.json은 JVM testImplementation에만 포함합니다.
+AGP 9.4.0, Gradle 9.6.0, AGP 내장 Kotlin(컴파일러 2.4.20), compile/target SDK 37을 사용합니다. CI JDK는 21, 앱 바이트코드 대상은 11입니다. 의존성은 gradle/libs.versions.toml에 고정하며 LiteRT-LM은 0.17.0입니다. org.json은 JVM testImplementation에만 포함합니다. AGP 기본 Kotlin 컴파일러는 의존성의 2.4 메타데이터를 읽지 못하므로 루트 buildscript classpath에 호환 버전을 지정합니다.
 
 Lint 경고는 오류로 처리합니다. CI는 APK 가짜 토큰 포함 검사와 XML/HTML Lint 보고서를 제공합니다. Maestro는 앱 소스·리소스·빌드 의존성 변경에도 실행합니다.
 
