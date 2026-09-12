@@ -19,9 +19,10 @@ appId: com.example.kakaotalkautobot
 - assertVisible: "로컬 응답 엔진"
 - scrollUntilVisible:
     element:
-      text: "Gemma 4 로컬 모델만 사용합니다."
+      id: "text_provider_summary"
     direction: DOWN
-- assertVisible: "Gemma 4 로컬 모델만 사용합니다."
+- assertVisible:
+    id: "text_provider_summary"
 - scrollUntilVisible:
     element:
       text: "현재 메시지, 최근 대화와 직접 입력한 방 메모를 근거로 답장합니다. 수동 예시와 자동 분석한 말투는 표현 형식에만 참고합니다."

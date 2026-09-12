@@ -23,6 +23,7 @@
 
 - `.github/workflows/conversation-storage.yml`은 SQLite 통합 검증, `maestro.yml`은 사용자 화면 검증을 담당한다.
 - Maestro는 `conversations.yaml`, `home.yaml`, `settings.yaml`, `room-management.yaml`만 별도 실행 폴더에 모아 실행한다. 각 flow는 앱 데이터를 초기화하며 개인 대화 파일을 사용하지 않는다.
+- 설정의 모델 안내는 `text_provider_summary` ID로 스크롤·표시를 검사한다. 방 관리의 `debug_room_scroll` 확인 직후에는 `hideKeyboard`를 호출하지 않는다. 키보드가 없는 상태에서 뒤로가기로 처리되어 메인 화면으로 이탈하는 회귀를 방지한다.
 - CLI 설치와 출력 옵션은 [공식 설치 안내](https://github.com/mobile-dev-inc/Maestro#installing-the-cli)와 [테스트 아티팩트 안내](https://docs.maestro.dev/cli/test-output-directory)를 따른다. 실제 실행한 CLI 버전은 워크플로 로그에 남긴다.
 - 이 구성의 추가 자체는 테스트 통과를 의미하지 않는다. 최종 커밋의 Actions 실행 결과와 업로드된 보고서를 확인해야 한다.
 - UI smoke는 파일 선택 창 진입·취소까지 검사한다. 실제 대화 파일 선택 후 가져오기 전체 과정, 카카오톡 알림 식별 안정성, ARM64 기기의 모델 추론·실제 답장 도착은 별도 실기기 검증이 필요하다.
