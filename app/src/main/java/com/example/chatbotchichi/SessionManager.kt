@@ -27,7 +27,7 @@ object SessionManager {
     /**
      * 알림에서 답장 가능한 Action을 추출하여 세션으로 저장
      */
-    fun bindSession(context: Context, room: String, notification: Notification, packageName: String) {
+    @Synchronized fun bindSession(context: Context, room: String, notification: Notification, packageName: String) {
         // 1. WearableExtender에서 찾기 (카카오톡 등 대부분 여기 있음)
         val wearableExtender = NotificationCompat.WearableExtender(notification)
         for (action in wearableExtender.actions) {
@@ -73,7 +73,7 @@ object SessionManager {
 
     }
 
-    fun getSession(room: String): CachedSession? {
+    @Synchronized fun getSession(room: String): CachedSession? {
         return sessionMap[room]
     }
 
@@ -86,7 +86,7 @@ object SessionManager {
         val lastSeen: Long
     )
 
-    fun getRegisteredRooms(context: Context): List<RoomEntry> {
+    @Synchronized fun getRegisteredRooms(context: Context): List<RoomEntry> {
         loadRooms(context)
         val allRooms = (roomLastSeen.keys + sessionMap.keys).distinct().sorted()
         return allRooms.map { room ->

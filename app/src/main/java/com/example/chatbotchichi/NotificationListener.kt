@@ -10,8 +10,17 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class NotificationListener : NotificationListenerService() {
+    private val processingScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val processingMutex = Mutex()
     private val processedNotifications = mutableMapOf<String, Long>()
 
     internal data class IncomingHandlingPlan(
@@ -48,6 +57,15 @@ class NotificationListener : NotificationListenerService() {
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         super.onNotificationPosted(sbn)
+        processingScope.launch { processingMutex.withLock { handleNotification(sbn) } }
+    }
+
+    override fun onDestroy() {
+        processingScope.cancel()
+        super.onDestroy()
+    }
+
+    private fun handleNotification(sbn: StatusBarNotification) {
         if (sbn.packageName != "com.kakao.talk" && sbn.packageName != packageName && sbn.packageName != "com.android.shell") return
 
         val lastTime = processedNotifications[sbn.key] ?: 0L
@@ -98,21 +116,27 @@ class NotificationListener : NotificationListenerService() {
 
             if (msg.isNullOrBlank()) return
             if (room.isNullOrBlank()) room = sender
-            SessionManager.bindSession(this, room, sbn.notification, sbn.packageName)
-            processIncoming(room, msg, sender, room != sender, SessionReplier(this, room, false))
+            val shortcut = if (android.os.Build.VERSION.SDK_INT >= 26) sbn.notification.shortcutId else null
+            val identity = "${sbn.user.hashCode()}:${sbn.packageName}:${shortcut?.let { "shortcut:$it" } ?: "notification:${sbn.key}"}"
+            val conversationId = ConversationStore.observeNotification(this, identity, room)
+            SessionManager.bindSession(this, conversationId, sbn.notification, sbn.packageName)
+            processIncoming(room, msg, sender, room != sender, SessionReplier(this, conversationId, false), conversationId,
+                ConversationStore.digest("${sbn.key}:${sbn.postTime}:$sender:$msg"), sbn.postTime)
         } catch (error: Throwable) {
             Log.e("AutoReply-Listener", "알림 처리 실패", error)
         }
     }
 
-    private fun processIncoming(room: String, msg: String, sender: String, isGroupChat: Boolean, replier: SessionReplier) {
+    private fun processIncoming(room: String, msg: String, sender: String, isGroupChat: Boolean, replier: SessionReplier,
+        conversationId: String = room, eventKey: String? = null, timestamp: Long = System.currentTimeMillis()) {
         val roomConfig = BotManager.findRoomConfig(this, room, sender)
         val handlingPlan = incomingHandlingPlan(roomConfig, AppSettings.isAiReplyEnabled(this))
-        if (handlingPlan.shouldCapture) {
+        val capture = handlingPlan.shouldCapture && ConversationStore.isCaptureEnabled(this, conversationId)
+        if (capture) {
             AppSettings.ensureRoomTargetExists(this, room, enabled = false)
-            RoomStore.recordIncoming(this, room, sender, msg)
+            ConversationStore.record(this, conversationId, sender, msg, timestamp, MessageKind.OTHER, "notification", eventKey)
         }
-        UiLogger.log(
+        if (capture) UiLogger.log(
             this,
             "IN",
             "[$room] $sender: $msg",
@@ -134,7 +158,7 @@ class NotificationListener : NotificationListenerService() {
             }
             return
         }
-        AutoReplyEngine.onIncoming(this, room, msg, sender, isGroupChat, replier, roomConfig)
+        AutoReplyEngine.onIncoming(this, room, msg, sender, isGroupChat, replier, roomConfig, conversationId)
     }
 
     internal fun incomingHandlingPlan(

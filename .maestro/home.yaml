@@ -4,6 +4,18 @@ appId: com.example.kakaotalkautobot
     clearState: true
 - assertVisible: "상태"
 - assertVisible: "AI 자동 답장"
-- assertVisible: "응답 설정"
+- scrollUntilVisible:
+    element:
+      text: "대화 수집·말투 분석"
+    direction: DOWN
+- assertVisible: "대화 수집·말투 분석"
+- scrollUntilVisible:
+    element:
+      text: "대상 방"
+    direction: DOWN
 - assertVisible: "대상 방"
+- scrollUntilVisible:
+    element:
+      text: "최근 로그"
+    direction: DOWN
 - assertVisible: "최근 로그"

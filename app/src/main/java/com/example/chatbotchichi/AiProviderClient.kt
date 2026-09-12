@@ -48,7 +48,8 @@ object AiProviderClient {
         room: String,
         sender: String,
         message: String,
-        history: List<RoomHistoryMessage>
+        history: List<RoomHistoryMessage>,
+        conversationId: String = room
     ): GenerationResult {
         val normalizedMessage = message.trim()
         if (normalizedMessage.isBlank()) {
@@ -57,7 +58,7 @@ object AiProviderClient {
 
         // Check trigger conditions first (non-AI logic still applies)
         val judgeMode = config.trigger.mode.equals("ai_judge", true) || config.trigger.mode.equals("smart", true)
-        Log.d(TAG, "generate called: room=$room, sender=$sender, msg=$message, judgeMode=$judgeMode, triggerMode=${config.trigger.mode}")
+        Log.d(TAG, "generate called: judgeMode=$judgeMode, triggerMode=${config.trigger.mode}")
 
         // Low signal quick check - skip for very short meaningless messages
         if (shouldSkipLowSignalBeforeModelLoad(config, normalizedMessage, history)) {
@@ -93,10 +94,9 @@ object AiProviderClient {
         // Build the prompt and generate
         return try {
             val aiConfig = AppSettings.getAiConfig(context)
-            val styleGuide = StyleProfileStore.buildPromptStyleGuide(context, aiConfig, config, room, history)
+            val styleGuide = StyleProfileStore.buildPromptStyleGuide(context, aiConfig, config, room, history, conversationId)
             val prompt = buildPrompt(config, room, sender, normalizedMessage, history, styleGuide)
             Log.d(TAG, "Prompt length: ${prompt.length} chars, judgeMode=$judgeMode")
-            Log.d(TAG, "Config: persona=${config.persona.take(30)}, roomMemory=${config.roomMemory.take(30)}, replyMode=${config.replyMode}")
 
             val candidateStats = ReplyCandidateStatsStore.snapshot(context)
             val sourcePriors = candidateStats.selectionPriors()
@@ -105,20 +105,17 @@ object AiProviderClient {
             logCandidateSummary(selectionCandidates)
             val bestCandidate = ReplyQualityEvaluator.selectBest(selectionCandidates, sourcePriors)
             ReplyCandidateStatsStore.recordBatch(context, selectionCandidates, bestCandidate?.source)
-            val rawResponse = bestCandidate?.raw.orEmpty()
 
             if (bestCandidate != null) {
                 Log.d(
                     TAG,
                     "Selected LLM reply source=${bestCandidate.source}, score=${bestCandidate.score}, sourcePrior=${sourcePriors.getOrDefault(bestCandidate.source, 0)}, reasons=${bestCandidate.reasons}"
                 )
-                Log.d(TAG, "Raw LLM response preview: '${rawResponse.take(100)}'")
             } else {
                 Log.w(TAG, "LLM candidates were empty or below quality threshold")
             }
 
             val reply = bestCandidate?.reply.orEmpty()
-            Log.d(TAG, "Cleaned reply: '$reply'")
 
             if (reply.isNotBlank()) {
                 GenerationResult(reply = reply)

@@ -62,6 +62,7 @@ class MainActivity : AppCompatActivity() {
             when (intent?.action) {
                 "com.example.kakaotalkautobot.STATUS_UPDATE" -> refreshStatusUi()
                 "com.example.kakaotalkautobot.LOG_UPDATE" -> appendLogLine(intent.getStringExtra("log") ?: return)
+                "com.example.kakaotalkautobot.LOG_CLEARED" -> loadLogHistory()
             }
         }
     }
@@ -90,6 +91,9 @@ class MainActivity : AppCompatActivity() {
         themeToggleGroup = findViewById(R.id.theme_toggle_group)
         permissionButton = findViewById(R.id.permission_button)
         editConfigButton = findViewById(R.id.btn_edit_config)
+        findViewById<MaterialButton>(R.id.btn_conversations).setOnClickListener {
+            startActivity(Intent(this, ConversationActivity::class.java))
+        }
         manageRoomsButton = findViewById(R.id.btn_manage_rooms)
 
         logText.movementMethod = ScrollingMovementMethod.getInstance()
@@ -175,6 +179,7 @@ class MainActivity : AppCompatActivity() {
         val filter = IntentFilter().apply {
             addAction("com.example.kakaotalkautobot.STATUS_UPDATE")
             addAction("com.example.kakaotalkautobot.LOG_UPDATE")
+            addAction("com.example.kakaotalkautobot.LOG_CLEARED")
         }
         ContextCompat.registerReceiver(this, receiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
         receiverRegistered = true

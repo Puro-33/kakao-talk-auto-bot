@@ -42,7 +42,7 @@ object StyleProfileStore {
             get() {
                 val details = buildList {
                     add(confidenceLabel)
-                    if (confidence > 0) add("${confidence.coerceIn(0, 100)}점")
+                    // Legacy coverage numbers are not measured accuracy and are never shown as scores.
                     if (sampleCount > 0) add("샘플 ${sampleCount}개")
                     if (enabled && override.isBlank() && confidence in 1..54) add("보조 힌트")
                 }
@@ -104,16 +104,16 @@ object StyleProfileStore {
         aiConfig: AppSettings.AiConfig,
         config: AutoReplyConfig,
         room: String,
-        history: List<RoomHistoryMessage>
+        history: List<RoomHistoryMessage>,
+        conversationId: String = room
     ): String {
-        val displayName = aiConfig.displayName.ifBlank { "나" }
-        val learnedUserState = getUserLearnedStyleState(
-            context = context,
-            displayName = displayName,
-            history = history,
-            importedText = config.roomMemory
-        )
-        val learnedRoomState = getRoomLearnedStyleState(context, room, history)
+        val profiles = ConversationStore.profiles(context, conversationId)
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val learnedUserState = stateFromProfile(profiles.first,
+            prefs.getBoolean(KEY_USER_LEARNED_ENABLED, true), prefs.getString(KEY_USER_LEARNED_OVERRIDE, "").orEmpty())
+        val roomPrefs = getRoomProfile(context, room)
+        val learnedRoomState = stateFromProfile(profiles.second,
+            roomPrefs.optBoolean("enabled", true), roomPrefs.optString("override", ""))
 
         return composePromptStyleGuide(
             StyleGuideParts(
@@ -138,14 +138,8 @@ object StyleProfileStore {
         importedText: String = ""
     ): LearnedStyleState {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val generatedProfile = buildUserStyleProfile(displayName, history, importedText)
-        return LearnedStyleState(
-            enabled = prefs.getBoolean(KEY_USER_LEARNED_ENABLED, true),
-            override = prefs.getString(KEY_USER_LEARNED_OVERRIDE, "").orEmpty(),
-            generated = generatedProfile.description,
-            confidence = generatedProfile.confidence,
-            sampleCount = generatedProfile.sampleCount
-        )
+        return stateFromProfile(ConversationStore.profiles(context, "").first,
+            prefs.getBoolean(KEY_USER_LEARNED_ENABLED, true), prefs.getString(KEY_USER_LEARNED_OVERRIDE, "").orEmpty())
     }
 
     fun setUserLearnedStyleEnabled(context: Context, enabled: Boolean) {
@@ -180,15 +174,15 @@ object StyleProfileStore {
     ): LearnedStyleState {
         val normalizedRoom = room.trim()
         val profile = getRoomProfile(context, normalizedRoom)
-        val generatedProfile = buildRoomStyleProfile(history)
-        return LearnedStyleState(
-            enabled = profile.optBoolean("enabled", true),
-            override = profile.optString("override", ""),
-            generated = generatedProfile.description,
-            confidence = generatedProfile.confidence,
-            sampleCount = generatedProfile.sampleCount
-        )
+        return stateFromProfile(ConversationStore.profiles(context, normalizedRoom).second,
+            profile.optBoolean("enabled", true), profile.optString("override", ""))
     }
+
+    private fun stateFromProfile(profile: ConversationStyleProfile, enabled: Boolean, override: String) = LearnedStyleState(
+        enabled = enabled, override = override, generated = profile.description,
+        confidence = if (profile.usable) 55 else if (profile.sampleCount > 0) 24 else 0,
+        sampleCount = profile.sampleCount
+    )
 
     fun setRoomLearnedStyleEnabled(context: Context, room: String, enabled: Boolean) {
         updateRoomProfile(context, room) { profile ->
@@ -230,7 +224,8 @@ object StyleProfileStore {
 
         return buildString {
             append("말투/스타일 지침:\n")
-            append("- 우선순위: 사용자 직접 예시 > 수동 방 스타일 > 가져온 내 발화 스타일 > 앱에서 관측한 내 발화 스타일 > 자동 방 스타일 > 최근 대화 사실.\n")
+            append("- 말투 우선순위: 사용자 직접 예시 > 수동 방 스타일 > 이 방의 내 말투 > 전체 내 말투 > 자동 방 스타일.\n")
+            append("- 말투 예문은 문장 형식만 참고한다. 예문 속 날짜, 이름, 장소, 약속을 현재 사실로 사용하지 않는다. 사실은 현재 질문과 관련된 방 메모와 최근 대화에서 따로 확인한다.\n")
             append("- 답장할지 여부는 트리거 모드를 따르되, 답장을 만들 때는 위 우선순위의 말투를 먼저 따른다.\n")
             append("- 학습 말투 신뢰도가 낮으면 확정 규칙처럼 따르지 말고 수동 예시와 현재 방 맥락을 우선한다.\n")
             append("- 보조 힌트로 표시된 학습 말투가 사용자 직접 예시나 수동 방 스타일과 충돌하면 반드시 버린다.\n")
@@ -279,7 +274,6 @@ object StyleProfileStore {
 
         val details = buildList {
             add("신뢰도 $normalized")
-            if (confidence > 0) add("${confidence.coerceIn(0, 100)}점")
             if (sampleCount > 0) add("샘플 ${sampleCount}개")
             if (normalized == "낮음" && confidence in 1..54) add("보조 힌트")
             if (normalized == "낮음" && confidence in 1..54) add("충돌 시 무시")
@@ -303,11 +297,11 @@ object StyleProfileStore {
         val normalizedDisplayName = displayName.trim()
         if (normalizedDisplayName.isBlank()) return StyleProfile.EMPTY
 
-        val importedOwnMessages = extractOwnMessagesFromText(normalizedDisplayName, importedText)
+        // Unstructured memory and name equality alone are not proof of message authorship.
+        val importedOwnMessages = emptyList<String>()
         val observedOwnMessages = history
             .filter { message ->
-                message.sender.equals(normalizedDisplayName, ignoreCase = true) ||
-                    (!message.incoming && message.sender.equals("나", ignoreCase = true))
+                message.kind == MessageKind.SELF
             }
             .map { it.message.trim() }
             .filter { it.isNotBlank() && !it.equals("AI", ignoreCase = true) }
@@ -326,6 +320,7 @@ object StyleProfileStore {
 
     internal fun buildRoomStyleProfile(history: List<RoomHistoryMessage>): StyleProfile {
         val messages = history
+            .filter { it.kind == MessageKind.SELF || it.kind == MessageKind.OTHER }
             .map { sanitizeExample(it.message) }
             .filter { it.isNotBlank() }
             .takeLast(24)

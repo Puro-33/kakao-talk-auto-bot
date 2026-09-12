@@ -17,5 +17,9 @@ appId: com.example.kakaotalkautobot
 - assertVisible: "학습된 방 말투 사용"
 - assertVisible: "수정 초기화"
 - assertVisible: "학습 원본 삭제"
+- tapOn: "학습 원본 삭제"
+- assertVisible: "대화 파일 가져오기"
+- pressKey: back
+- assertVisible: "방 메모리 편집"
 - pressKey: back
 - assertVisible: "대상 방 관리"

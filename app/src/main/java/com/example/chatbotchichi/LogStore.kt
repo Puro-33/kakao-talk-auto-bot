@@ -35,9 +35,11 @@ object LogStore {
         return if (file.exists()) file.readText() else ""
     }
 
+    @Synchronized
     fun clear(context: Context) {
         val file = logFile(context)
         if (file.exists()) file.delete()
+        context.sendBroadcast(android.content.Intent("com.example.kakaotalkautobot.LOG_CLEARED").setPackage(context.packageName))
     }
 
     private fun logFile(context: Context): File {

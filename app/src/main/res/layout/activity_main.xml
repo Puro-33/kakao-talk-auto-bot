@@ -264,6 +264,21 @@
                     tools:text="답장 방식: 간결하게 · 트리거: 호출어/멘션만" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_conversations"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="@dimen/touch_target"
+                    android:layout_marginTop="@dimen/space_4"
+                    android:text="대화 수집·말투 분석" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="대화 파일에서 내 말투를 자동 분석합니다. 수동 예문과 말투 설정은 선택 사항입니다."
+                    android:textColor="@color/colorTextSecondary"
+                    android:textSize="13sp" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_edit_config"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="match_parent"
@@ -314,7 +329,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="가져온 CSV가 아직 없습니다."
+                    android:text="대화 파일은 대화 수집·말투 분석에서 가져올 수 있습니다."
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -332,7 +347,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="아직 대상 방이 없습니다. 방을 추가한 뒤 메모리와 CSV 기록을 연결하세요."
+                    android:text="아직 대상 방이 없습니다. 답장할 방을 추가하세요. 대화 수집은 별도로 선택할 수 있습니다."
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp"
                     android:visibility="gone" />

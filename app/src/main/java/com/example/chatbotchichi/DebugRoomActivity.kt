@@ -1,5 +1,6 @@
 package com.example.kakaotalkautobot
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.ArrayAdapter
 import android.widget.Spinner
@@ -96,24 +97,8 @@ class DebugRoomActivity : AppCompatActivity() {
         }
 
         clearRoomLearningSourceButton.setOnClickListener {
-            val roomName = editRoomName.text?.toString()?.trim().orEmpty()
-            if (roomName.isBlank()) {
-                Toast.makeText(this, "방 이름을 먼저 입력해주세요.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("학습 원본 삭제")
-                .setMessage("'${roomName}' 방의 저장된 대화 이력과 자동 메모리 요약을 삭제합니다. 방 메모리와 수동 방 말투는 유지됩니다.")
-                .setPositiveButton("삭제") { _, _ ->
-                    RoomStore.clearRoomHistory(this, roomName)
-                    AutoMemoryStore.clear(this, roomName)
-                    StyleProfileStore.resetRoomLearnedStyle(this, roomName)
-                    editLearnedRoomStyle.setText("")
-                    bindRoom(roomName)
-                    Toast.makeText(this, "학습 원본 대화를 삭제했습니다.", Toast.LENGTH_SHORT).show()
-                }
-                .setNegativeButton("취소", null)
-                .show()
+            startActivity(Intent(this, ConversationActivity::class.java))
+            Toast.makeText(this, "학습 데이터를 삭제할 방을 직접 선택하세요. 수동 설정은 유지됩니다.", Toast.LENGTH_LONG).show()
         }
 
         saveButton.setOnClickListener {
@@ -172,12 +157,7 @@ class DebugRoomActivity : AppCompatActivity() {
         editBlockedSenders.setText(config?.blockedSenders?.joinToString("\n").orEmpty())
         editCannedReplies.setText(config?.cannedReplies?.joinToString("\n").orEmpty())
 
-        val autoMemory = AutoMemoryStore.getSummary(this, roomName)
-        roomMetaText.text = if (autoMemory.isBlank()) {
-            "메모가 비어 있습니다. AI가 참고할 맥락을 적어주세요."
-        } else {
-            "최근 대화가 자동으로 요약되어 메모에 반영됩니다."
-        }
+        roomMetaText.text = "직접 입력한 메모와 말투는 이 방 이름의 응답 설정에 적용됩니다. 자동 분석은 대화 수집·말투 분석에서 확인하세요."
         bindLearnedRoomStyle(roomName)
     }
 
@@ -188,12 +168,9 @@ class DebugRoomActivity : AppCompatActivity() {
         editLearnedRoomStyle.setText(state.override)
         resetLearnedRoomStyleButton.text = state.resetOverrideButtonLabel
         resetLearnedRoomStyleButton.isEnabled = state.hasManualOverride
-        learnedRoomStylePreview.text = StyleProfileStore.learnedStylePreviewText(
-            subject = "방 말투",
-            state = state,
-            emptyMessage = "자동 추출된 방 말투가 아직 없습니다.",
-            manualStyle = editRoomStyle.text?.toString().orEmpty()
-        )
+        learnedRoomStylePreview.text = "자동 말투 미리보기와 원본 삭제는 대화 수집·말투 분석에서 실제 방을 선택하세요. " +
+            "같은 이름의 방을 자동으로 연결하지 않습니다." +
+            if (state.hasManualOverride) "\n수동 수정값: ${state.override}" else ""
     }
 
     private fun configureSpinner(spinner: Spinner, items: List<String>) {

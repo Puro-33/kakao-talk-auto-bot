@@ -281,23 +281,8 @@ object AppSettings {
             .toList()
         if (cleanedLines.isEmpty()) return 0
 
-        val existing = getRoomMemory(context, normalized).trim()
-        val importedBlock = buildString {
-            append("[CSV 가져오기: ")
-            append(sourceLabel.ifBlank { "history.csv" })
-            append("]\n")
-            append(cleanedLines.joinToString("\n"))
-        }
-
-        val merged = buildString {
-            if (existing.isNotBlank()) {
-                append(existing)
-                append("\n\n")
-            }
-            append(importedBlock)
-        }.take(20000)
-
-        saveRoomMemory(context, normalized, merged)
+        // Compatibility only. Unverified legacy text is not personal-style evidence or manual memory.
+        ConversationStore.importLegacy(context, normalized, cleanedLines.joinToString("\n"))
         upsertImportMetadata(context, normalized, sourceLabel.ifBlank { "history.csv" })
         return cleanedLines.size
     }

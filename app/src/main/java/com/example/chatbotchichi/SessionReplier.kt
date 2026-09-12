@@ -26,6 +26,7 @@ class SessionReplier(
 
     private val TAG = "BotEngine-Replier"
     private fun logOutgoing(targetRoom: String, message: String, success: Boolean, reason: String? = null) {
+        if (!ConversationStore.isCaptureEnabled(context, targetRoom)) return
         val label = if (success) "OUT" else "OUT_FAIL"
         val base = "[$targetRoom] $message"
         val serverMessage = if (success) {
@@ -105,7 +106,7 @@ class SessionReplier(
                         logOutgoing(targetRoom, message, false, REASON_PENDING_INTENT_SEND_FAILED)
                         return SendResult(false, REASON_PENDING_INTENT_SEND_FAILED)
                     }
-                    Log.d(TAG, "Reply sent to $targetRoom: $message")
+                    Log.d(TAG, "Reply request accepted")
                     RoomStore.recordOutgoing(context, targetRoom, message)
                     logOutgoing(targetRoom, message, true, null)
 
@@ -130,7 +131,7 @@ class SessionReplier(
 
         // 2. 실전 세션이 없고 디버그 모드인 경우 (가상 시뮬레이션)
         if (isDebug) {
-            Log.d(TAG, "[DEBUG] Simulation Reply to $targetRoom: $message")
+            Log.d(TAG, "[DEBUG] Simulation reply")
             RoomStore.recordOutgoing(context, targetRoom, message)
             val intent = Intent("com.example.kakaotalkautobot.BOT_REPLY")
             intent.putExtra("msg", "🛠 [가상] $targetRoom: $message")

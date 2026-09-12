@@ -1,0 +1,17 @@
+appId: com.example.kakaotalkautobot
+---
+- launchApp:
+    clearState: true
+- scrollUntilVisible:
+    element:
+      text: "대화 수집·말투 분석"
+    direction: DOWN
+- tapOn: "대화 수집·말투 분석"
+- assertVisible: "대화 파일 가져오기"
+- assertVisible: "아직 수집한 방이 없습니다."
+- tapOn: "방 목록 새로고침"
+- assertVisible: "아직 수집한 방이 없습니다."
+- tapOn: "대화 파일 가져오기"
+- pressKey: back
+- assertVisible: "대화 파일 가져오기"
+- assertVisible: "아직 수집한 방이 없습니다."

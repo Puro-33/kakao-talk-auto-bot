@@ -2,6 +2,10 @@ appId: com.example.kakaotalkautobot
 ---
 - launchApp:
     clearState: true
+- scrollUntilVisible:
+    element:
+      text: "응답 설정 편집"
+    direction: DOWN
 - tapOn: "응답 설정 편집"
 - assertVisible: "AI 답장 설정"
 - assertVisible: "내 정보"

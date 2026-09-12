@@ -20,13 +20,10 @@ object UiLogger {
         trackStats: Boolean = true
     ) {
         if (!allowedLabels.contains(label)) return
-        val normalizedMessage = when {
-            label == "OUT_FAIL" && !message.trimStart().startsWith("❌") -> "❌ $message"
-            label == "OUT_SKIP" && !message.trimStart().startsWith("⏭") -> "⏭ $message"
-            else -> message
-        }
         val time = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-        val line = "[$time][$label] $normalizedMessage"
+        // Raw conversations live only in the consented conversation database, not in an independent log copy.
+        val reason = eventReason?.let { ReplyStatsStore.normalizeReason(it) }
+        val line = "[$time][$label] ${reason ?: "event"}"
         LogStore.append(context, line)
         if (trackStats) {
             ReplyStatsStore.record(context, label, eventReason ?: serverMessage)

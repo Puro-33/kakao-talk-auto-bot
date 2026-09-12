@@ -25,8 +25,9 @@ class StyleProfileStoreTest {
         assertTrue(guide.contains("신뢰도가 낮으면"))
         assertTrue(guide.contains("보조 힌트로 표시된 학습 말투"))
         assertTrue(guide.contains("충돌하면 반드시 버린다"))
-        assertTrue(guide.contains("학습된 사용자 말투(신뢰도 낮음, 24점, 샘플 2개, 보조 힌트, 충돌 시 무시)"))
-        assertTrue(guide.contains("학습된 방 말투(신뢰도 높음, 92점, 샘플 12개)"))
+        assertTrue(guide.contains("학습된 사용자 말투(신뢰도 낮음, 샘플 2개, 보조 힌트, 충돌 시 무시)"))
+        assertTrue(guide.contains("학습된 방 말투(신뢰도 높음, 샘플 12개)"))
+        assertTrue(!guide.contains("24점") && !guide.contains("92점"))
         assertTrue(guide.indexOf("사용자 직접 예시") < guide.indexOf("수동 방 스타일"))
         assertTrue(guide.indexOf("수동 방 스타일") < guide.indexOf("학습된 사용자 말투"))
         assertTrue(guide.indexOf("학습된 사용자 말투") < guide.indexOf("학습된 방 말투"))
@@ -46,7 +47,7 @@ class StyleProfileStoreTest {
         )
 
         assertTrue(guide.contains("학습 말투 신뢰도가 낮으면 확정 규칙처럼 따르지 말고"))
-        assertTrue(guide.contains("학습된 방 말투(신뢰도 낮음, 24점, 샘플 1개, 보조 힌트, 충돌 시 무시)"))
+        assertTrue(guide.contains("학습된 방 말투(신뢰도 낮음, 샘플 1개, 보조 힌트, 충돌 시 무시)"))
         assertTrue(guide.indexOf("수동 방 스타일") < guide.indexOf("학습된 방 말투"))
     }
 
@@ -63,12 +64,12 @@ class StyleProfileStoreTest {
             )
         )
 
-        assertTrue(guide.contains("학습된 사용자 말투(신뢰도 수동 수정, 24점, 샘플 1개)"))
-        assertTrue(!guide.contains("학습된 사용자 말투(신뢰도 수동 수정, 24점, 샘플 1개, 보조 힌트"))
+        assertTrue(guide.contains("학습된 사용자 말투(신뢰도 수동 수정, 샘플 1개)"))
+        assertTrue(!guide.contains("학습된 사용자 말투(신뢰도 수동 수정, 샘플 1개, 보조 힌트"))
     }
 
     @Test
-    fun buildUserStyleFromMessages_uses_imported_own_messages() {
+    fun buildUserStyleFromMessages_doesNotTrustNamesInUnstructuredMemory() {
         val style = StyleProfileStore.buildUserStyleFromMessages(
             displayName = "동건",
             history = emptyList(),
@@ -80,25 +81,43 @@ class StyleProfileStoreTest {
             """.trimIndent()
         )
 
-        assertTrue(style.contains("내 발화 기준"))
-        assertTrue(style.contains("아무것도 없긴해"))
-        assertTrue(style.contains("이따 봐"))
+        assertTrue(style.isEmpty())
+    }
+
+    @Test
+    fun buildUserStyleFromMessages_usesExplicitSelfAndRejectsOtherProvenance() {
+        val profile = StyleProfileStore.buildUserStyleProfile(
+            displayName = "본인",
+            history = listOf(
+                RoomHistoryMessage("본인", "아무것도 없긴해", false, 1L, MessageKind.SELF),
+                RoomHistoryMessage("본인", "이따 봐", false, 2L, MessageKind.SELF),
+                RoomHistoryMessage("본인", "미확인제외", true, 3L),
+                RoomHistoryMessage("본인", "상대방제외", true, 4L, MessageKind.OTHER),
+                RoomHistoryMessage("본인", "생성답장제외", false, 5L, MessageKind.AI)
+            ),
+            importedText = "본인: 기억속예문제외"
+        )
+        assertTrue(profile.sampleCount == 2)
+        assertTrue(profile.description.contains("내 발화 기준"))
+        assertTrue(profile.description.contains("아무것도 없긴해"))
+        assertTrue(profile.description.contains("이따 봐"))
+        assertTrue(!profile.description.contains("제외"))
     }
 
     @Test
     fun buildRoomStyleFromMessages_distinguishes_friend_and_team_tones() {
         val friendStyle = StyleProfileStore.buildRoomStyleFromMessages(
             listOf(
-                RoomHistoryMessage("민수", "ㅋㅋ 오늘 뭐함", true, 1L),
-                RoomHistoryMessage("지우", "아무것도 없긴해", true, 2L),
-                RoomHistoryMessage("민수", "ㅇㅋ 이따 봐", true, 3L)
+                RoomHistoryMessage("민수", "ㅋㅋ 오늘 뭐함", true, 1L, MessageKind.OTHER),
+                RoomHistoryMessage("지우", "아무것도 없긴해", true, 2L, MessageKind.OTHER),
+                RoomHistoryMessage("민수", "ㅇㅋ 이따 봐", true, 3L, MessageKind.OTHER)
             )
         )
         val teamStyle = StyleProfileStore.buildRoomStyleFromMessages(
             listOf(
-                RoomHistoryMessage("팀장", "오늘 공유할 내용 있나요?", true, 1L),
-                RoomHistoryMessage("나", "별일없습니다!", false, 2L),
-                RoomHistoryMessage("팀장", "확인했습니다", true, 3L)
+                RoomHistoryMessage("팀장", "오늘 공유할 내용 있나요?", true, 1L, MessageKind.OTHER),
+                RoomHistoryMessage("나", "별일없습니다!", false, 2L, MessageKind.SELF),
+                RoomHistoryMessage("팀장", "확인했습니다", true, 3L, MessageKind.OTHER)
             )
         )
 
@@ -109,11 +128,11 @@ class StyleProfileStoreTest {
     @Test
     fun styleProfiles_includeConfidenceFromSampleCount() {
         val low = StyleProfileStore.buildRoomStyleProfile(
-            listOf(RoomHistoryMessage("민수", "ㅇㅋ", true, 1L))
+            listOf(RoomHistoryMessage("민수", "ㅇㅋ", true, 1L, MessageKind.OTHER))
         )
         val high = StyleProfileStore.buildRoomStyleProfile(
             (1..12).map { index ->
-                RoomHistoryMessage("팀원$index", "확인했습니다", true, index.toLong())
+                RoomHistoryMessage("팀원$index", "확인했습니다", true, index.toLong(), MessageKind.OTHER)
             }
         )
 
@@ -133,7 +152,7 @@ class StyleProfileStoreTest {
         )
 
         assertTrue(state.confidenceSummary.contains("낮음"))
-        assertTrue(state.confidenceSummary.contains("24점"))
+        assertTrue(!state.confidenceSummary.contains("24점"))
         assertTrue(state.confidenceSummary.contains("샘플 1개"))
         assertTrue(state.confidenceSummary.contains("보조 힌트"))
     }
@@ -227,7 +246,7 @@ class StyleProfileStoreTest {
 
         assertTrue(preview.contains("자동 추출"))
         assertTrue(preview.contains("낮음"))
-        assertTrue(preview.contains("24점"))
+        assertTrue(!preview.contains("24점"))
         assertTrue(preview.contains("샘플 1개"))
         assertTrue(preview.contains("보조 힌트"))
         assertTrue(preview.contains("학습 원본 삭제"))

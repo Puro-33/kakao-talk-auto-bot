@@ -36,13 +36,14 @@ object AutoReplyEngine {
         sender: String,
         isGroupChat: Boolean,
         replier: SessionReplier,
-        config: AutoReplyConfig
+        config: AutoReplyConfig,
+        conversationId: String = room
     ) {
         if (!BotManager.findMatchingConfig(context, room, sender, message, isGroupChat)?.name.equals(config.name)) {
             return
         }
         if (!config.replyEnabled) return
-        if (!shouldAcceptReplyWork(room, sender, message)) {
+        if (!shouldAcceptReplyWork(conversationId, sender, message)) {
             UiLogger.log(
                 context,
                 "OUT_SKIP",
@@ -55,9 +56,11 @@ object AutoReplyEngine {
             return
         }
 
+        val revision = ConversationStore.revision(conversationId)
         replyScope.launch {
-            mutexForRoom(room).withLock {
-                val history = RoomStore.recentMessages(context, room, limit = 40).let { messages ->
+            mutexForRoom(conversationId).withLock {
+                if (revision != ConversationStore.revision(conversationId)) return@withLock
+                val history = RoomStore.recentMessages(context, conversationId, limit = 40).let { messages ->
                     if (messages.isNotEmpty()) {
                         val last = messages.last()
                         if (last.incoming && last.sender == sender && last.message == message) messages.dropLast(1) else messages
@@ -65,7 +68,7 @@ object AutoReplyEngine {
                         messages
                     }
                 }
-                val memoryAugmentedConfig = withAutoMemory(context, room, config)
+                val memoryAugmentedConfig = config
                 val resolution = when (memoryAugmentedConfig.replyMode.lowercase()) {
                     "canned" -> cannedReply(memoryAugmentedConfig, room, sender, message)
                     else -> AiProviderClient.generate(
@@ -74,12 +77,15 @@ object AutoReplyEngine {
                         room = room,
                         sender = sender,
                         message = message,
-                        history = history
+                        history = history,
+                        conversationId = conversationId
                     ).toResolution()
                 }
                 when {
                     !resolution.reply.isNullOrBlank() -> {
-                        val sendResult = replier.replyToRoomDetailed(room, resolution.reply)
+                        if (revision != ConversationStore.revision(conversationId) || !AppSettings.isAiReplyEnabled(context) ||
+                            BotManager.findMatchingConfig(context, room, sender, message, isGroupChat)?.replyEnabled != true) return@withLock
+                        val sendResult = replier.replyToRoomDetailed(conversationId, resolution.reply)
                         if (!sendResult.sent) {
                             val reason = "AI 답장은 생성됐지만 카카오톡 전송에 실패했습니다."
                             val detail = sendResult.reason ?: "unknown"
@@ -161,19 +167,6 @@ object AutoReplyEngine {
             iteratorForSize.next()
             iteratorForSize.remove()
         }
-    }
-
-    private fun withAutoMemory(context: Context, room: String, config: AutoReplyConfig): AutoReplyConfig {
-        val autoMemory = AutoMemoryStore.getSummary(context, room)
-        if (autoMemory.isBlank()) return config
-        val combinedMemory = buildString {
-            if (config.roomMemory.isNotBlank()) {
-                append(config.roomMemory.trim())
-                append("\n\n")
-            }
-            append(autoMemory)
-        }
-        return config.copy(roomMemory = combinedMemory.trim())
     }
 
     private fun cannedReply(

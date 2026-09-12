@@ -1,5 +1,26 @@
 # 테스트 / 품질 전략
 
+## 대화 DB·자동 말투 분석 변경의 검증
+
+아래 항목은 새 기능의 검증 대상과 실행 방법입니다. 테스트 코드 추가만으로 통과를 뜻하지 않으며, 이번 변경의 실제 실행 결과는 CI 보고서와 별도 기기 증거로 확인합니다. 아래의 과거 모델 계측값은 DB·가져오기 기능을 검증한 결과가 아닙니다.
+
+- `KakaoExportParserTest`: Android 내보내기, BOM·CRLF·여러 줄, 반복 문장, 정오·자정, 잘못된 날짜·지원하지 않는 구간의 경계 및 경고.
+- `ConversationStyleAnalyzerTest`: SELF와 OTHER 분리, AI·UNKNOWN 제외, 90일 범위, 표본 부족, 말투 통계와 형식 참고 예문.
+- `StyleProfileStoreTest`, `NotificationListenerTest`: 수동 수정 우선과 수집·자동답장 조건 분리. DB의 방별 동의는 아래 계측 테스트에서도 검증합니다.
+- `ConversationStoreInstrumentedTest`: 같은 파일 재가져오기와 반복 발화 보존, 같은 이름 방의 ID 분리 및 명시적 연결, 수집 동의, 생성 발화 제외, 방별 내 말투 우선·전체 말투 대체, 삭제 및 보관 기간 정리 후 재계산.
+
+기본 JVM·lint·APK 게이트는 기존 명령을 사용합니다. DB 계측 테스트는 모델 없이 Android 기기 또는 에뮬레이터에서 별도로 실행합니다.
+
+```bash
+./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStoreInstrumentedTest
+maestro test .maestro
+```
+
+실제 카카오톡 파일 가져오기→본인 선택→방 연결→수집 ON→미리보기→삭제 흐름, 동일 이름 방과 알림 key 변경·재사용, UTF-8 오류·10 MiB 초과·저장 공간 부족·화면 종료, 큰 파일 처리 중 알림 지연은 실제 기기에서 확인해야 합니다. 90일 유지보수의 앱 재시작·장기 중지·예약 작업 복귀, 백업 제외도 확인합니다. 성능과 실제 카카오톡 전송은 현재 문서만으로 검증 완료로 간주하지 않습니다.
+
+신규 운영 로그는 본문을 기록하지 않습니다. 아래 기존 실기기 스크립트 설명 중 방 이름·발화자의 원문 로그 자동 매칭은 새 로그 형식에서 별도 호환 검증이 필요합니다. 자동 매칭 실패를 전송 실패로 단정하거나, 기존 예시 명령만으로 실제 도착을 확인했다고 기록하면 안 됩니다. 수집을 켠 테스트방의 저장 상태와 카카오톡 대화창을 직접 확인해 수동 증거를 남깁니다.
+
 ## 기본 원칙
 
 - 빠른 회귀 방지는 JVM 단위 테스트가 맡습니다.
@@ -68,8 +89,8 @@ maestro test .maestro
 - JSON 직렬화/역직렬화
 - 방 이력 파싱
 - 로컬 LLM 프롬프트 구성과 응답 정규화
-- 말투 프로필 우선순위, CSV/방 이력 기반 말투 추출, 방별 말투 판별
-- 학습 말투 UI가 전역 내 말투와 방별 말투 모두에서 신뢰도 라벨, 0-100 점수, 샘플 수, 낮은 신뢰도 보조 힌트, 수동/자동 말투 충돌 경고와 reset 안내를 표시하고, 수동 수정값이 있을 때만 수정 초기화를 활성화하는 가드
+- 말투 프로필 우선순위, 명시적으로 분류한 SELF 발화 기반 말투 추출, 방별 말투 판별
+- 말투 UI의 표본 수·분석 기간·갱신 시각, 수동 수정 우선과 reset 안내; 기존 보조 라벨도 정확도 점수로 제시하지 않는 가드
 - 레거시 OpenAI/로컬 공급자 설정의 로컬 Gemma 정규화
 - 로컬 검색/트리거 판단 가드 로직
 - `AI가 판단` 낮은 신호 메시지가 모델 로드 없이 스킵되는 가드 로직
@@ -79,7 +100,7 @@ maestro test .maestro
 - 손상된 방 상태 JSON 파싱 실패 시 빈 목록으로 복구하는 가드
 - 트리거 섹션이 없거나 빈 값인 레거시 설정이 모든 메시지 모드로 승격되지 않는 JSON 파싱 가드
 - 알림 수집과 답장 시도 분리 가드 로직
-- OFF 상태 또는 방별 답장 비활성화일 때도 메시지 수집은 유지되고 답장만 막히는 가드 로직
+- 수집 동의를 켠 방에서는 자동답장 OFF에도 저장을 유지하고, 새 방·수집 OFF 방은 본문을 저장하지 않는 가드
 - 전송 실패와 스킵 reason 이 `no session`, `no remoteInput`, `pendingIntent null`, `pendingIntent send failed`, `global reply off`, `room reply off`, `no room config`, `low signal`, `duplicate notification`, `model not loaded`, `ai quality rejected`, `ai generation exception`, `canned reply empty` 같은 표준 카테고리로 집계되고 최근 실패/스킵 reason, 동시에 쌓인 실패/스킵별 다음 확인 지점, 마지막 전송/실패/스킵 이벤트 시각이 남는 통계 가드
 - 후보 응답 source 별 생성/선택/빈 응답/저품질/latency 집계가 대화 원문 없이 계산되는 가드
 - source 별 후보 통계 보정점이 가까운 후보의 tie-breaker 로만 작동하고 명백히 나쁜 답변을 이기지 못하는 선택 가드
@@ -143,7 +164,7 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 - [ ] `AI가 판단` 모드에서도 최근 대화 맥락이 있는 낮은 신호 메시지는 무조건 skip하지 않고 실기기 LLM 검증 대상으로 남음
 - [ ] 전역 AI 답장 OFF, 방별 답장 OFF, 응답 설정 없는 방은 각각 다른 skip 원인으로 기록됨
 - [ ] 같은 방/발화자/메시지 반복 알림은 짧은 TTL 안에서 중복 답장하지 않음
-- [ ] 전역 OFF 또는 방별 답장 OFF 상태에서도 메시지 저장과 세션 갱신은 유지되고 답장만 중단됨
+- [ ] 수집 동의가 켜진 방은 전역·방별 답장 OFF에도 저장을 유지하고, 수집 OFF 방에는 본문이 남지 않음
 - [ ] 보내기 전 승인 UI 없이 자동 전송 경로가 유지됨
 - [ ] 외부 로그 전송, webhook/n8n 의존, JS 스크립팅 봇 엔진 회귀가 없음
 
@@ -153,7 +174,7 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 - [ ] 방별 수동 말투가 학습된 사용자/방 말투보다 우선함
 - [ ] 학습된 내 말투와 학습된 방 말투를 각각 켜기/끄기/수정/초기화할 수 있음
 - [ ] 잘못 배운 방 말투를 다시 쌓을 수 있도록 방별 학습 원본 대화를 삭제할 수 있음
-- [ ] 학습 말투 신뢰도 낮음은 프롬프트와 전역/방별 UI에서 확정 규칙이 아니라 보조 힌트로 처리되고, 신뢰도 점수, 샘플 수, 학습 원본 삭제 안내가 함께 들어감
+- [ ] 표본 부족 시 자동 말투 적용을 보류하고 표본 수·분석 기간·갱신 시각을 표시하며 정확도 점수로 설명하지 않음
 - [ ] 방별 수동 말투와 자동 학습 말투가 반말/존댓말 기준으로 충돌하면 preview 에 수동 방 스타일 우선과 학습 원본 삭제 안내가 표시됨
 - [ ] `수정 초기화` 는 수동 수정값이 있을 때만 활성화되고, 자동 추출값 재학습은 `학습 원본 삭제` 경로로 구분됨
 - [ ] 친한 친구방 예시에서는 가벼운 반말 응답이 나옴
@@ -169,7 +190,7 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 - [ ] 애매한 말에는 확인 질문을 하고, 임의로 완료/불가를 단정하지 않음
 - [ ] 애매한 말의 확인 질문 후보는 친구방/학교방 말투에 맞게 반말/존댓말을 구분함
 - [ ] `그거 됐어?`, `그거 준비됐나요?` 같은 애매한 말에 `됐어`, `완료했습니다`, `준비됐습니다`처럼 아는 척하는 후보는 `ambiguous_overclaim` 으로 감점됨
-- [ ] 방 메모리, 최근 대화, CSV 이력이 답장 근거로 함께 들어감
+- [ ] 방 메모리와 대화 DB의 최근 맥락을 사실 근거로 사용하고 말투 예문은 사실 근거로 재사용하지 않음
 - [ ] 모르는 사실은 추측하지 않고 모른다고 짧게 답함
 - [ ] AI 메타 문구, 챗봇식 상투어, 자기 지칭 업무체, 프롬프트 반복, 지나치게 긴 후보가 최종 답장으로 선택되지 않음
 - [ ] `제가 확인해보겠습니다` 같은 자기 지칭 업무체 후보는 `self_referential_business_tone` 으로 감점됨
@@ -226,7 +247,7 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 - [ ] 알림 접근 권한 허용 후 `NotificationListener` 연결 상태 확인
 - [ ] `outputs/real-device-e2e/*-summary.txt` 의 `notification_listener_enabled=true` 확인
 - [ ] `MANUAL_KAKAO_TEST_ROOM` 과 `MANUAL_KAKAO_TEST_SENDER` 가 있으면 앱 내부 로그에서 `manual_kakao_auto_in_log_detected`, `manual_kakao_auto_out_log_detected`, `manual_kakao_remoteinput_failure_reason` 이 자동 감지됨
-- [ ] 카카오톡 메시지 수신 시 방 이름, 발화자, 메시지가 로컬에 저장됨
+- [ ] 수집을 명시적으로 켠 방에서만 수신 메시지가 대화 DB에 저장됨
 - [ ] 대상 방으로 설정하지 않은 방에는 답장하지 않음
 - [ ] 대상 방에서는 조건을 만족할 때 자동 답장이 전송됨
 - [ ] 직접 채팅과 단톡방에서 각각 발화자/방 조건이 다르게 적용됨
@@ -242,7 +263,7 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 - [ ] `manual_kakao_remoteinput_failure_reason` 이 비어 있지 않으면 다른 수동 증거가 true 여도 `manual_kakao_complete=false` 로 남음
 - [ ] `manual_kakao_complete=false` 일 때 `manual_kakao_pending_reason` 이 빠진 증거 또는 RemoteInput 실패 원인을 표준 값으로 남김
 - [ ] 모델 검증만 통과하고 수동 카카오톡 증거가 비어 있으면 최종 상태가 `manual_kakao_pending` 으로 남음
-- [ ] OFF 상태 전환 직후 수신 메시지는 저장되지만 답장은 나가지 않음
+- [ ] 자동답장 OFF 상태 전환 직후 수집 동의를 켠 방은 수신 메시지를 저장하지만 답장은 나가지 않음
 - [ ] OFF 상태 전환 직후 수신 메시지는 `OUT_SKIP` 에 OFF 원인이 남음
 
 ### 안정성 / 개인정보
@@ -309,14 +330,14 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 ## 최근 말투 프로필 회귀 보강
 
 - `AutoReplyJsonTest` 는 방별 `roomStyle` 직렬화/역직렬화 유지를 확인합니다.
-- `StyleProfileStoreTest` 는 사용자 직접 예시가 수동 방 말투와 학습된 말투보다 앞서는지, CSV/방 이력에서 말투가 추출되는지 확인합니다.
+- `StyleProfileStoreTest` 는 사용자 직접 예시가 수동 방 말투와 학습된 말투보다 앞서는지, 본인으로 분류한 발화에서 말투가 추출되는지 확인합니다.
 - `AiProviderClientTest` 는 스타일 지침이 페르소나/방 메모보다 먼저 프롬프트에 들어가는지 확인합니다.
 - Maestro 설정/방 관리 흐름은 새 입력 항목이 화면에 노출되는지 확인합니다.
 
 ## 최근 구성 마이그레이션 / 수집 가드 회귀 보강
 
 - 저장된 레거시 로컬 공급자 값 `local` / `local-gguf` / `local-litertlm` 는 현재 표준값 `llm` / `gemma-4-e2b-it-litertlm` 로 정규화합니다.
-- 알림 처리 경로는 전역 OFF 또는 방별 `replyEnabled = false` 상태에서도 **메시지 수집은 유지하고 답장만 중단**하도록 JVM 테스트로 회귀를 막습니다.
+- 알림 처리 경로는 전역 OFF 또는 방별 `replyEnabled = false` 상태에서도 수집 동의를 켠 방에 한해 **메시지 수집은 유지하고 답장만 중단**하도록 JVM 테스트로 회귀를 막습니다.
 
 ## Gemma 4 실기기 완료 기준
 

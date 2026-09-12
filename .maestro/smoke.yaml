@@ -5,8 +5,24 @@ appId: com.example.kakaotalkautobot
 - assertVisible: "상태"
 - assertVisible: "AI 자동 답장"
 - assertVisible: "화면 모드"
+- scrollUntilVisible:
+    element:
+      text: "대화 수집·말투 분석"
+    direction: DOWN
+- tapOn: "대화 수집·말투 분석"
+- assertVisible: "대화 파일 가져오기"
+- assertVisible: "아직 수집한 방이 없습니다."
+- pressKey: back
+- scrollUntilVisible:
+    element:
+      text: "응답 설정 편집"
+    direction: DOWN
 - tapOn: "응답 설정 편집"
 - assertVisible: "AI 답장 설정"
 - pressKey: back
+- scrollUntilVisible:
+    element:
+      text: "대상 방 관리"
+    direction: UP
 - tapOn: "대상 방 관리"
 - assertVisible: "대상 방 관리"

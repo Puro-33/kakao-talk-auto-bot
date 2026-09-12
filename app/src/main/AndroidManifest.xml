@@ -10,7 +10,7 @@
     <application
         android:name=".KakaoTalkAutoBotApplication"
         android:usesCleartextTraffic="true"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -33,12 +33,20 @@
             android:name=".EditBotActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".ConversationActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
             android:name=".DebugRoomActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
             android:name=".CreatePollingBotActivity"
             android:windowSoftInputMode="adjustResize" />
 
+        <service
+            android:name=".ConversationMaintenanceService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
         <service
             android:name=".NotificationListener"
             android:exported="true"
