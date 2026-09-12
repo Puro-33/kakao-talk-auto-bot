@@ -38,7 +38,8 @@ class CreatePollingBotActivity : AppCompatActivity() {
         rootScroll.bindFocusScroll(inputRoomName)
         roomAdapter = RoomTargetAdapter(
             roomTargets,
-            secondaryActionLabel = "메모",
+            context = this,
+            secondaryActionLabel = getString(R.string.action_memo),
             onRoomClick = { room -> openMemoryEditor(room.name) },
             onSecondaryActionClick = { room -> openMemoryEditor(room.name) },
             onDeleteClick = { room ->

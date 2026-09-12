@@ -292,7 +292,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun scrollLogToBottom() {
         logScroll.post {
-            logScroll.fullScroll(View.FOCUS_DOWN)
+            // Updating the log must not move keyboard/accessibility focus or the outer page.
+            logScroll.scrollTo(0, logText.height)
         }
     }
 
