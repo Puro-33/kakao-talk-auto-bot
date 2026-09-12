@@ -7,11 +7,63 @@ appId: com.example.kakaotalkautobot
       text: "대화 수집·말투 분석"
     direction: DOWN
 - tapOn: "대화 수집·말투 분석"
-- assertVisible: "대화 파일 가져오기"
+- assertVisible:
+    id: "btn_select_capture_room"
 - assertVisible: "아직 수집한 방이 없습니다."
-- tapOn: "방 목록 새로고침"
-- assertVisible: "아직 수집한 방이 없습니다."
-- tapOn: "대화 파일 가져오기"
+- tapOn:
+    id: "btn_refresh_conversations"
+- assertVisible:
+    id: "room_selection_scroll"
+- scrollUntilVisible:
+    element:
+      id: "room_selection_cancel"
+    direction: DOWN
+- tapOn:
+    id: "room_selection_cancel"
+- assertVisible:
+    id: "btn_select_capture_room"
+- tapOn:
+    id: "btn_select_capture_room"
+- assertVisible:
+    id: "room_selection_scroll"
+- scrollUntilVisible:
+    element:
+      id: "room_selection_start"
+    direction: DOWN
+- tapOn:
+    id: "room_selection_start"
+- scrollUntilVisible:
+    element:
+      id: "room_selection_status"
+    direction: DOWN
+- assertVisible:
+    id: "room_selection_status"
+    text: "접근성 설정에서 이 앱의 방 선택 서비스를 허용한 뒤 다시 시작하세요."
+- scrollUntilVisible:
+    element:
+      id: "room_selection_confirm"
+    direction: DOWN
+- assertVisible:
+    id: "room_selection_confirm"
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: "room_selection_cancel"
+    direction: DOWN
+- tapOn:
+    id: "room_selection_cancel"
+- assertVisible:
+    id: "btn_select_capture_room"
+- scrollUntilVisible:
+    element:
+      id: "btn_import_past_conversation"
+    direction: DOWN
+- tapOn:
+    id: "btn_import_past_conversation"
 - pressKey: back
-- assertVisible: "대화 파일 가져오기"
+- assertVisible: "과거 대화 파일 가져오기"
+- scrollUntilVisible:
+    element:
+      id: "conversation_status"
+    direction: UP
 - assertVisible: "아직 수집한 방이 없습니다."

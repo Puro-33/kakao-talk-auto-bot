@@ -251,6 +251,74 @@ class ConversationStoreInstrumentedTest {
         assertTrue(ConversationStore.recentMessages(context, deleted).isEmpty())
     }
 
+    @Test fun screenTitleSelectionIsExplicitIdempotentAndDoesNotEnableCapture() {
+        val imported = ConversationStore.createRoom(context, "선택한 방")
+        val selected = ConversationStore.ensureScreenSelectedRoom(context, "선택한 방")
+        assertNotEquals(imported, selected)
+        assertEquals(selected, ConversationStore.ensureScreenSelectedRoom(context, " 선택한 방 "))
+        val room = ConversationStore.listRooms(context).first { it.id == selected }
+        assertTrue(room.selectedByTitle)
+        assertNull(room.notificationKey)
+        assertFalse(room.captureEnabled)
+        assertFalse(ConversationStore.listRooms(context).first { it.id == imported }.selectedByTitle)
+        assertEquals(selected, BotManager.addScreenSelectedRoom(context, "선택한 방").conversationId)
+        assertFalse(ConversationStore.isCaptureEnabled(context, selected))
+        ConversationStore.setCaptureEnabled(context, selected, true)
+        assertTrue(ConversationStore.isCaptureEnabled(context, selected))
+        ConversationStore.closeForTest()
+        assertEquals(selected, ConversationStore.ensureScreenSelectedRoom(context, "선택한 방"))
+    }
+
+    @Test fun selectedTitleRoutesOnlyFutureEventsAndPreservesPreviousObservedHistory() {
+        val observed = ConversationStore.observeNotification(context, "real-key-a", "같은 표시 이름")
+        ConversationStore.setCaptureEnabled(context, observed, true)
+        ConversationStore.record(context, observed, "상대", "이전 방의 기록", System.currentTimeMillis(), MessageKind.OTHER, "notification", "before")
+        val selected = ConversationStore.ensureScreenSelectedRoom(context, "같은 표시 이름")
+        assertEquals(selected, ConversationStore.observeNotification(context, "real-key-a", "같은 표시 이름"))
+        assertEquals(selected, ConversationStore.observeNotification(context, "real-key-b", "같은 표시 이름"))
+        ConversationStore.record(context, selected, "상대", "수집 동의 전", System.currentTimeMillis(), MessageKind.OTHER, "notification", "disabled")
+        assertTrue(ConversationStore.recentMessages(context, selected).isEmpty())
+
+        ConversationStore.setCaptureEnabled(context, selected, true)
+        ConversationStore.record(context, selected, "상대", "선택 후 기록", System.currentTimeMillis(), MessageKind.OTHER, "notification", "after")
+        assertEquals(listOf("이전 방의 기록"), ConversationStore.recentMessages(context, observed).map { it.message })
+        assertEquals(listOf("선택 후 기록"), ConversationStore.recentMessages(context, selected).map { it.message })
+        val previous = ConversationStore.listRooms(context).first { it.id == observed }
+        assertEquals("real-key-a", previous.notificationKey)
+        assertFalse(previous.selectedByTitle)
+        assertNull(ConversationStore.listRooms(context).first { it.id == selected }.notificationKey)
+        assertEquals(observed, ConversationStore.observeNotification(context, "real-key-a", "다른 표시 이름"))
+    }
+
+    @Test fun versionOneDatabaseUpgradePreservesHistoryAndDoesNotInferTitleConsent() {
+        SQLiteDatabase.openOrCreateDatabase(context.getDatabasePath("conversations.db"), null).use { db ->
+            db.execSQL("CREATE TABLE conversations (id TEXT PRIMARY KEY,title TEXT NOT NULL,capture INTEGER NOT NULL DEFAULT 0,self_name TEXT,notification_key TEXT UNIQUE,legacy_name TEXT UNIQUE)")
+            db.execSQL("CREATE TABLE participants (room_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,name TEXT NOT NULL,PRIMARY KEY(room_id,name))")
+            db.execSQL("CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT,room_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,sender TEXT NOT NULL,body TEXT NOT NULL,sent_at INTEGER NOT NULL,kind TEXT NOT NULL,source TEXT NOT NULL,event_key TEXT NOT NULL,import_id TEXT,UNIQUE(room_id,event_key))")
+            db.execSQL("CREATE INDEX messages_room_time ON messages(room_id,sent_at)")
+            db.execSQL("CREATE INDEX messages_kind_time ON messages(kind,sent_at)")
+            db.execSQL("CREATE TABLE imports (room_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,fingerprint TEXT NOT NULL,imported_at INTEGER NOT NULL,PRIMARY KEY(room_id,fingerprint))")
+            db.execSQL("CREATE TABLE profiles (profile_key TEXT PRIMARY KEY,description TEXT NOT NULL DEFAULT '',samples INTEGER NOT NULL DEFAULT 0,first_at INTEGER NOT NULL DEFAULT 0,last_at INTEGER NOT NULL DEFAULT 0,updated_at INTEGER NOT NULL DEFAULT 0,dirty INTEGER NOT NULL DEFAULT 1)")
+            db.execSQL("CREATE TABLE migrations (marker TEXT PRIMARY KEY)")
+            db.execSQL("INSERT INTO conversations(id,title,capture,notification_key) VALUES('old-id','이전 방',1,'old-real-key')")
+            db.execSQL("INSERT INTO messages(room_id,sender,body,sent_at,kind,source,event_key) VALUES('old-id','상대','보존된 기록',?,'OTHER','notification','old-event')", arrayOf(System.currentTimeMillis()))
+            db.version = 1
+        }
+        val upgraded = ConversationStore.listRooms(context).single()
+        assertEquals("old-id", upgraded.id)
+        assertEquals("old-real-key", upgraded.notificationKey)
+        assertTrue(upgraded.captureEnabled)
+        assertFalse(upgraded.selectedByTitle)
+        assertEquals(listOf("보존된 기록"), ConversationStore.recentMessages(context, upgraded.id).map { it.message })
+        assertEquals(upgraded.id, ConversationStore.observeNotification(context, "old-real-key", "이전 방"))
+        val selected = ConversationStore.ensureScreenSelectedRoom(context, "이전 방")
+        assertNotEquals(upgraded.id, selected)
+        assertEquals(selected, ConversationStore.observeNotification(context, "old-real-key", "이전 방"))
+        SQLiteDatabase.openDatabase(context.getDatabasePath("conversations.db").path, null, SQLiteDatabase.OPEN_READONLY).use {
+            assertEquals(2, it.version)
+        }
+    }
+
     /** Every path and preference is scoped to a unique test directory/name, never the installed app DB. */
     private class IsolatedConversationContext(base: Context) : ContextWrapper(base) {
         private val prefix = "conversation-test-${UUID.randomUUID()}"

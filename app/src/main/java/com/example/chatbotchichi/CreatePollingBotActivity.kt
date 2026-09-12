@@ -1,5 +1,7 @@
 package com.example.kakaotalkautobot
 
+import android.content.Intent
+import androidx.activity.result.contract.ActivityResultContracts
 import android.os.Bundle
 import android.view.View
 import android.widget.TextView
@@ -23,6 +25,18 @@ class CreatePollingBotActivity : AppCompatActivity() {
     private val roomTargets = mutableListOf<AppSettings.RoomTarget>()
     private lateinit var roomAdapter: RoomTargetAdapter
 
+    private val roomSelection = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val title = result.data?.getStringExtra(RoomSelectionActivity.EXTRA_ROOM_TITLE)
+                ?.trim()?.takeIf { it.isNotEmpty() }
+            if (title != null) {
+                val saved = runCatching { BotManager.addScreenSelectedRoom(this, title) }.isSuccess
+                Toast.makeText(this, if (saved) R.string.room_selection_saved else R.string.room_selection_failed, Toast.LENGTH_SHORT).show()
+                loadRoomTargets()
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_polling)
@@ -40,14 +54,14 @@ class CreatePollingBotActivity : AppCompatActivity() {
             roomTargets,
             context = this,
             secondaryActionLabel = getString(R.string.action_memo),
-            onRoomClick = { room -> openMemoryEditor(room.name) },
-            onSecondaryActionClick = { room -> openMemoryEditor(room.name) },
+            onRoomClick = { room -> openMemoryEditor(room.name, room.configName) },
+            onSecondaryActionClick = { room -> openMemoryEditor(room.name, room.configName) },
             onDeleteClick = { room ->
                 androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("대상 방 제거")
                     .setMessage("'${room.name}' 방을 대상 목록에서 제거할까요?")
                     .setPositiveButton("제거") { _, _ ->
-                        BotManager.deleteBot(this, room.name)
+                        BotManager.deleteBot(this, room.configName)
                         AppSettings.removeRoomTarget(this, room.name)
                         loadRoomTargets()
                     }
@@ -55,7 +69,7 @@ class CreatePollingBotActivity : AppCompatActivity() {
                     .show()
             },
             onToggleChanged = { room, isChecked ->
-                BotManager.setBotEnabled(this, room.name, isChecked)
+                BotManager.setBotEnabled(this, room.configName, isChecked)
                 loadRoomTargets()
             }
         )
@@ -71,6 +85,20 @@ class CreatePollingBotActivity : AppCompatActivity() {
         }
 
         addRoomButton.setOnClickListener {
+            roomSelection.launch(Intent(this, RoomSelectionActivity::class.java))
+        }
+        findViewById<MaterialButton>(R.id.btn_refresh_rooms).setOnClickListener {
+            roomSelection.launch(Intent(this, RoomSelectionActivity::class.java))
+        }
+        val manualButton = findViewById<MaterialButton>(R.id.btn_manual_room)
+        manualButton.setOnClickListener {
+            val manualInput = findViewById<View>(R.id.manual_room_input)
+            if (manualInput.visibility != View.VISIBLE) {
+                manualInput.visibility = View.VISIBLE
+                manualButton.setText(R.string.manual_room_add)
+                inputRoomName.requestFocus()
+                return@setOnClickListener
+            }
             val roomName = inputRoomName.text?.toString()?.trim().orEmpty()
             if (roomName.isEmpty()) {
                 Toast.makeText(this, "방 이름을 입력해주세요.", Toast.LENGTH_SHORT).show()
@@ -111,7 +139,8 @@ class CreatePollingBotActivity : AppCompatActivity() {
             .map { bot ->
                 val metadata = AppSettings.getRoomTarget(this, bot.roomPattern)
                 AppSettings.RoomTarget(
-                    name = bot.roomPattern,
+                    name = bot.name,
+                    configName = bot.name,
                     isEnabled = bot.isEnabled,
                     lastImportedAt = metadata?.lastImportedAt ?: 0L,
                     lastImportSource = metadata?.lastImportSource
@@ -121,10 +150,12 @@ class CreatePollingBotActivity : AppCompatActivity() {
         emptyText.visibility = if (rooms.isEmpty()) View.VISIBLE else View.GONE
     }
 
-    private fun openMemoryEditor(roomName: String) {
+    private fun openMemoryEditor(roomName: String, configName: String) {
+        val actualRoom = BotManager.getConfig(this, configName)?.roomPattern ?: roomName
         startActivity(
             android.content.Intent(this, DebugRoomActivity::class.java)
-                .putExtra("roomName", roomName)
+                .putExtra("roomName", actualRoom)
+                .putExtra("configName", configName)
         )
     }
 

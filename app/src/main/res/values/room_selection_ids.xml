@@ -1,0 +1,8 @@
+<resources>
+    <item type="id" name="room_selection_scroll" />
+    <item type="id" name="room_selection_settings" />
+    <item type="id" name="room_selection_start" />
+    <item type="id" name="room_selection_status" />
+    <item type="id" name="room_selection_confirm" />
+    <item type="id" name="room_selection_cancel" />
+</resources>

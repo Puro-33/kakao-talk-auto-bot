@@ -110,14 +110,14 @@ class MainActivity : AppCompatActivity() {
             roomTargets,
             context = this,
             secondaryActionLabel = getString(R.string.action_memo),
-            onRoomClick = { room -> openRoomMemory(room.name) },
-            onSecondaryActionClick = { room -> openRoomMemory(room.name) },
+            onRoomClick = { room -> openRoomMemory(room.name, room.configName) },
+            onSecondaryActionClick = { room -> openRoomMemory(room.name, room.configName) },
             onDeleteClick = { room ->
                 androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("대상 방 제거")
                     .setMessage("'${room.name}' 방을 대상 목록에서 제거할까요?")
                     .setPositiveButton("제거") { _, _ ->
-                        BotManager.deleteBot(this, room.name)
+                        BotManager.deleteBot(this, room.configName)
                         AppSettings.removeRoomTarget(this, room.name)
                         loadRoomTargets()
                     }
@@ -125,7 +125,7 @@ class MainActivity : AppCompatActivity() {
                     .show()
             },
             onToggleChanged = { room, isChecked ->
-                BotManager.setBotEnabled(this, room.name, isChecked)
+                BotManager.setBotEnabled(this, room.configName, isChecked)
                 loadRoomTargets()
             }
         )
@@ -351,7 +351,8 @@ class MainActivity : AppCompatActivity() {
             .map { bot ->
                 val metadata = AppSettings.getRoomTarget(this, bot.roomPattern)
                 AppSettings.RoomTarget(
-                    name = bot.roomPattern,
+                    name = bot.name,
+                    configName = bot.name,
                     isEnabled = bot.isEnabled,
                     lastImportedAt = metadata?.lastImportedAt ?: 0L,
                     lastImportSource = metadata?.lastImportSource
@@ -405,10 +406,12 @@ class MainActivity : AppCompatActivity() {
         bindingThemeToggle = false
     }
 
-    private fun openRoomMemory(roomName: String) {
+    private fun openRoomMemory(roomName: String, configName: String) {
+        val actualRoom = BotManager.getConfig(this, configName)?.roomPattern ?: roomName
         startActivity(
             Intent(this, DebugRoomActivity::class.java)
-                .putExtra("roomName", roomName)
+                .putExtra("roomName", actualRoom)
+                .putExtra("configName", configName)
         )
     }
 }

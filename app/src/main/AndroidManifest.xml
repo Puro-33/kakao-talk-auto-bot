@@ -7,6 +7,10 @@
     <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
         tools:ignore="ProtectedPermissions" />
 
+    <queries>
+        <package android:name="com.kakao.talk" />
+    </queries>
+
     <application
         android:name=".KakaoTalkAutoBotApplication"
         android:usesCleartextTraffic="true"
@@ -37,6 +41,10 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
+            android:name=".RoomSelectionActivity"
+            android:exported="false"
+            android:launchMode="singleTop" />
+        <activity
             android:name=".DebugRoomActivity"
             android:windowSoftInputMode="adjustResize" />
         <activity
@@ -47,6 +55,18 @@
             android:name=".ConversationMaintenanceService"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name=".KakaoRoomSelectionService"
+            android:exported="true"
+            android:label="@string/room_selection_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/room_selection_accessibility" />
+        </service>
         <service
             android:name=".NotificationListener"
             android:exported="true"

@@ -10,18 +10,34 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.app.NotificationManagerCompat
+import java.lang.ref.WeakReference
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class NotificationListener : NotificationListenerService() {
+    companion object {
+        @Volatile private var connectedListener = WeakReference<NotificationListener>(null)
+
+        /** Refresh room metadata only; existing messages are never replayed or answered. */
+        suspend fun refreshObservedRooms(): Boolean {
+            val listener = connectedListener.get() ?: return false
+            return listener.refreshRoomMetadata()
+        }
+    }
+
     private val processingScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val processingMutex = Mutex()
     private val processedNotifications = mutableMapOf<String, Long>()
+    @Volatile private var listenerConnected = false
+    private var debugReceiverRegistered = false
 
     internal data class IncomingHandlingPlan(
         val shouldCapture: Boolean,
@@ -41,18 +57,21 @@ class NotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         super.onListenerConnected()
+        listenerConnected = true
+        connectedListener = WeakReference(this)
         updateStatus("알림 리스너 연결됨", true)
-        val filter = IntentFilter("com.example.kakaotalkautobot.DEBUG_MSG")
-        ContextCompat.registerReceiver(this, debugReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+        if (!debugReceiverRegistered) {
+            val filter = IntentFilter("com.example.kakaotalkautobot.DEBUG_MSG")
+            ContextCompat.registerReceiver(this, debugReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED)
+            debugReceiverRegistered = true
+        }
+        processingScope.launch { refreshRoomMetadata() }
     }
 
     override fun onListenerDisconnected() {
         super.onListenerDisconnected()
+        clearConnection()
         updateStatus("연결 끊김", false)
-        try {
-            unregisterReceiver(debugReceiver)
-        } catch (_: Exception) {
-        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -61,12 +80,62 @@ class NotificationListener : NotificationListenerService() {
     }
 
     override fun onDestroy() {
+        clearConnection()
         processingScope.cancel()
         super.onDestroy()
     }
 
+    private fun clearConnection() {
+        listenerConnected = false
+        if (connectedListener.get() === this) connectedListener = WeakReference(null)
+        if (debugReceiverRegistered) {
+            unregisterReceiver(debugReceiver)
+            debugReceiverRegistered = false
+        }
+    }
+
+    private suspend fun refreshRoomMetadata(): Boolean = withContext(Dispatchers.IO) {
+        processingMutex.withLock {
+            if (!listenerConnected || connectedListener.get() !== this@NotificationListener ||
+                packageName !in NotificationManagerCompat.getEnabledListenerPackages(this@NotificationListener)) {
+                return@withLock false
+            }
+            try {
+                val notifications = activeNotifications ?: return@withLock false
+                notifications.forEach { sbn ->
+                    if (!listenerConnected) return@withLock false
+                    if (sbn.packageName == "com.kakao.talk" &&
+                        sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY == 0) {
+                        val metadata = roomMetadata(sbn) ?: return@forEach
+                        ConversationStore.observeNotification(this@NotificationListener, metadata.identity, metadata.title)
+                    }
+                }
+                listenerConnected
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                // No notification bodies or exception details are copied into logs.
+                false
+            }
+        }
+    }
+
+    private fun roomMetadata(sbn: StatusBarNotification): NotificationRoomMetadata? {
+        val extras = sbn.notification.extras ?: return null
+        val shortcut = if (android.os.Build.VERSION.SDK_INT >= 26) sbn.notification.shortcutId else null
+        return NotificationRoomMetadata.from(
+            userId = sbn.user.hashCode(), packageName = sbn.packageName, shortcutId = shortcut,
+            notificationKey = sbn.key,
+            conversationTitle = extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString(),
+            subText = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString(),
+            summaryText = extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString(),
+            title = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
+        )
+    }
+
     private fun handleNotification(sbn: StatusBarNotification) {
         if (sbn.packageName != "com.kakao.talk" && sbn.packageName != packageName && sbn.packageName != "com.android.shell") return
+        if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
 
         val lastTime = processedNotifications[sbn.key] ?: 0L
         if (sbn.postTime <= lastTime) return
@@ -85,8 +154,8 @@ class NotificationListener : NotificationListenerService() {
             if (msg.isNullOrBlank()) {
                 msg = extras.getCharSequence(Notification.EXTRA_BIG_TEXT)?.toString()
             }
-            val conversationTitle = extras.getCharSequence(Notification.EXTRA_CONVERSATION_TITLE)?.toString()
-            var room = conversationTitle?.trim()
+            val metadata = roomMetadata(sbn) ?: return
+            val room = metadata.title
             var sender = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: "알수없음"
 
             val messages = extras.getParcelableArray(Notification.EXTRA_MESSAGES)
@@ -99,9 +168,6 @@ class NotificationListener : NotificationListenerService() {
                     if (!senderName.isNullOrBlank()) sender = senderName
                 }
             }
-            if (room.isNullOrBlank()) room = extras.getCharSequence(Notification.EXTRA_SUB_TEXT)?.toString()?.trim()
-            if (room.isNullOrBlank()) room = extras.getCharSequence(Notification.EXTRA_SUMMARY_TEXT)?.toString()?.trim()
-            if (room.isNullOrBlank()) room = extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()?.trim()
             if (!msg.isNullOrBlank() && room == sender) {
                 val idx = msg.indexOf(": ")
                 if (idx in 1..40) {
@@ -115,10 +181,7 @@ class NotificationListener : NotificationListenerService() {
             }
 
             if (msg.isNullOrBlank()) return
-            if (room.isNullOrBlank()) room = sender
-            val shortcut = if (android.os.Build.VERSION.SDK_INT >= 26) sbn.notification.shortcutId else null
-            val identity = "${sbn.user.hashCode()}:${sbn.packageName}:${shortcut?.let { "shortcut:$it" } ?: "notification:${sbn.key}"}"
-            val conversationId = ConversationStore.observeNotification(this, identity, room)
+            val conversationId = ConversationStore.observeNotification(this, metadata.identity, room)
             SessionManager.bindSession(this, conversationId, sbn.notification, sbn.packageName)
             processIncoming(room, msg, sender, room != sender, SessionReplier(this, conversationId, false), conversationId,
                 ConversationStore.digest("${sbn.key}:${sbn.postTime}:$sender:$msg"), sbn.postTime)
@@ -129,7 +192,7 @@ class NotificationListener : NotificationListenerService() {
 
     private fun processIncoming(room: String, msg: String, sender: String, isGroupChat: Boolean, replier: SessionReplier,
         conversationId: String = room, eventKey: String? = null, timestamp: Long = System.currentTimeMillis()) {
-        val roomConfig = BotManager.findRoomConfig(this, room, sender)
+        val roomConfig = BotManager.findRoomConfig(this, room, sender, conversationId)
         val handlingPlan = incomingHandlingPlan(roomConfig, AppSettings.isAiReplyEnabled(this))
         val capture = handlingPlan.shouldCapture && ConversationStore.isCaptureEnabled(this, conversationId)
         if (capture) {

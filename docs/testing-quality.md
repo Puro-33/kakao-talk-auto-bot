@@ -9,11 +9,11 @@
 - `StyleProfileStoreTest`, `NotificationListenerTest`: 수동 수정 우선과 수집·자동답장 조건 분리. DB의 방별 동의는 아래 계측 테스트에서도 검증합니다.
 - `ConversationStoreInstrumentedTest`: 같은 파일 재가져오기와 반복 발화 보존, 같은 이름 방의 ID 분리 및 명시적 연결, 수집 동의, 생성 발화 제외, 방별 내 말투 우선·전체 말투 대체, 삭제 및 보관 기간 정리 후 재계산.
 
-기본 JVM·lint·APK 게이트는 기존 명령을 사용합니다. DB 계측 테스트는 모델 없이 Android 기기 또는 에뮬레이터에서 별도로 실행합니다.
+기본 JVM·lint·APK 게이트는 기존 명령을 사용합니다. DB 계측 테스트는 모델 없이 Android 기기 또는 에뮬레이터에서 별도로 실행합니다. `ConversationStorageSuite`는 SQLite 13개, 방 목록 어댑터 2개, 방 설정 연결 4개로 현재 총 19개 테스트를 묶습니다. 단일 suite 클래스 필터로 실행하며 CI는 세 클래스 모두 실제 실행 결과에 있는지 검사합니다. `ExampleInstrumentedTest`의 모델 다운로드·추론 테스트는 포함하지 않습니다.
 
 ```bash
 ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStoreInstrumentedTest
+./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStorageSuite
 maestro test .maestro
 ```
 
@@ -361,3 +361,7 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 Lint 경고도 CI 실패로 처리하며 baseline이나 일괄 제외를 사용하지 않습니다. ModelIdentityTest는 직접 모델명 질문, 잘못된 전제, 일반 주제 구분과 다섯 프롬프트를 검사합니다. testModelIdentityUsesConfiguredMetadata는 정확한 모델명을 검사합니다. testDefaultModelGeneratesKoreanOnDevice는 기본 모델을 로드해 실제 한국어 생성을 검사하며 ARM64 실기기가 필요합니다. RoomTargetAdapterInstrumentedTest는 호출자 목록 변경, 개별 행 갱신과 메모 변경을 검사합니다.
 
 CI는 공개 가짜 토큰을 환경 변수와 .env에 설정해 Debug/Release APK를 만듭니다. scripts/verify-apk-privacy.py는 압축을 푼 내부 파일에서 해당 토큰의 UTF-8/UTF-16 포함 여부를 검사합니다. 실제 토큰을 사용하지 않으며 모든 종류의 비밀정보 부재를 증명하는 검사는 아닙니다.
+
+## 방 선택 회귀 검사
+
+Maestro는 대상 추가·대상 새로고침·대화 수집의 방 선택 화면과 명시적 파일 가져오기를 분리해 검사합니다. NotificationRoomMetadataTest는 알림 제목·shortcut ID·사용자별 식별을 검사합니다. BotManagerRoomBindingInstrumentedTest는 동명 방 격리, 재선택 시 설정 보존, 파일명 충돌, 비활성 설정 우회 방지를 검증합니다. 실제 카카오톡 알림 수신은 알림 접근을 켠 실기기에서 추가 검증해야 합니다.

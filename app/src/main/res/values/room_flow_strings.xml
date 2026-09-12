@@ -1,0 +1,18 @@
+<resources>
+    <string name="choose_kakao_room">카카오톡 방 선택</string>
+    <string name="refresh_room_list">방 목록 새로고침</string>
+    <string name="manual_room_entry">방 이름 직접 입력</string>
+    <string name="manual_room_add">입력한 방 추가</string>
+    <string name="room_selection_saved">선택한 방을 추가했습니다.</string>
+    <string name="room_selection_failed">방 설정을 저장하지 못했습니다. 다시 시도해 주세요.</string>
+    <string name="select_capture_room">수집할 카카오톡 방 선택</string>
+    <string name="conversation_collection_intro">카카오톡을 열어 수집할 방을 직접 선택하세요. 확인 후 같은 제목의 방에서 알림으로 받은 메시지를 저장합니다. 수집을 켜도 AI 자동답장은 켜지지 않습니다.</string>
+    <string name="room_selected_title_binding">직접 선택한 방 제목으로 연결됨 · 동명 방 구분 불가</string>
+    <string name="conversation_history_optional">과거 대화와 직접 보낸 메시지의 말투 분석이 필요할 때만 아래 파일 가져오기를 사용하세요.</string>
+    <string name="import_past_conversation">과거 대화 파일 가져오기</string>
+    <string name="capture_room_confirm_title">이 방의 대화 수집을 시작할까요?</string>
+    <string name="capture_room_confirm_message">%1$s\n\n선택 이후 알림으로 받은 메시지만 이 기기에 저장합니다. 과거 대화와 직접 보낸 메시지는 자동으로 읽지 않습니다.</string>
+    <string name="capture_start">수집 시작</string>
+    <string name="capture_cancel">취소</string>
+    <string name="capture_saving">수집할 방을 저장하는 중…</string>
+</resources>

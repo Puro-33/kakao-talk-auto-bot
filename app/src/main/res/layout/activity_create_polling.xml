@@ -106,13 +106,14 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
                     <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/manual_room_input"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:visibility="gone"
                         android:hint="@string/room_name_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
@@ -125,12 +126,26 @@
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_add_room"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="@dimen/touch_target"
                         android:layout_marginStart="@dimen/space_3"
                         android:backgroundTint="@color/colorPrimary"
-                        android:text="@string/action_add"
+                        android:text="@string/choose_kakao_room"
                         android:textColor="@color/colorOnPrimary" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_refresh_rooms"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="@dimen/touch_target"
+                        android:text="@string/refresh_room_list" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_manual_room"
+                        style="@style/Widget.MaterialComponents.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="@dimen/touch_target"
+                        android:text="@string/manual_room_entry" />
                 </LinearLayout>
 
                 <TextView

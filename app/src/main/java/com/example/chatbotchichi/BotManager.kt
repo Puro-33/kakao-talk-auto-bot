@@ -44,9 +44,18 @@ object BotManager {
         return getConfigs(context).firstOrNull { it.roomPattern.equals(roomPattern, true) }
     }
 
-    fun findRoomConfig(context: Context, room: String, sender: String): AutoReplyConfig? {
-        val roomConfig = getConfigs(context)
+    fun findRoomConfig(context: Context, room: String, sender: String, conversationId: String? = null): AutoReplyConfig? {
+        val configs = getConfigs(context)
+        // An explicit ID binding outranks legacy title patterns, including an explicit
+        // disabled state or sender restriction. Never fall through to a same-title room.
+        val bound = conversationId?.takeIf { it.isNotBlank() }?.let { id ->
+            configs.firstOrNull { it.conversationId == id }
+        }
+        if (bound != null) return bound.takeIf { it.enabled && senderAllowed(it, sender) }
+
+        val roomConfig = configs
             .asSequence()
+            .filter { it.conversationId == null }
             .filter { it.enabled }
             .filter { roomMatches(it.roomPattern, room) }
             .filter { senderAllowed(it, sender) }
@@ -55,6 +64,7 @@ object BotManager {
                 // If no specific room config found, check "all rooms" setting
                 if (AppSettings.isAllRoomsEnabled(context)) {
                     getConfig(context, "기본 자동응답")
+                        ?.takeIf { it.conversationId == null && it.enabled && senderAllowed(it, sender) }
                         ?.let { applyGlobalAiSettings(context, it, room) }
                 } else {
                     null
@@ -63,9 +73,44 @@ object BotManager {
         return roomConfig
     }
 
-    fun findMatchingConfig(context: Context, room: String, sender: String, message: String, isGroupChat: Boolean): AutoReplyConfig? {
-        val roomConfig = findRoomConfig(context, room, sender) ?: return null
+    fun findMatchingConfig(context: Context, room: String, sender: String, message: String, isGroupChat: Boolean, conversationId: String? = null): AutoReplyConfig? {
+        val roomConfig = findRoomConfig(context, room, sender, conversationId) ?: return null
         return roomConfig.takeIf { triggerMatches(it, message, isGroupChat) }
+    }
+
+    @Synchronized
+    fun addNotificationRoom(context: Context, room: ConversationSummary): AutoReplyConfig {
+        return addSelectedRoom(context, room)
+    }
+
+    /** The ID is this app's local conversation ID, not a Kakao server identifier. */
+    @Synchronized
+    fun addSelectedRoom(context: Context, room: ConversationSummary): AutoReplyConfig {
+        require(room.id.isNotBlank()) { "A selected room must have a local conversation ID" }
+        val configs = getConfigs(context)
+        configs.firstOrNull { it.conversationId == room.id }?.let { return it }
+        val title = room.title.trim().ifBlank { "카카오톡 대화방" }
+        var name = title
+        var suffix = 2
+        // Display names and their on-disk normalized filenames can collide independently.
+        while (configs.any { it.name.equals(name, ignoreCase = true) } || configFile(context, name).exists()) {
+            name = "$title (${suffix++})"
+        }
+        val config = AutoReplyJson.defaultConfig(name).copy(
+            roomPattern = title,
+            conversationId = room.id,
+            roomMemory = ""
+        )
+        saveConfig(context, config)
+        // Selecting a reply target does not enable ConversationStore message capture.
+        return config
+    }
+
+    @Synchronized
+    fun addScreenSelectedRoom(context: Context, title: String): AutoReplyConfig {
+        val id = ConversationStore.ensureScreenSelectedRoom(context, title)
+        val room = ConversationStore.listRooms(context).first { it.id == id }
+        return addSelectedRoom(context, room)
     }
 
     fun saveBot(context: Context, name: String, code: String) {

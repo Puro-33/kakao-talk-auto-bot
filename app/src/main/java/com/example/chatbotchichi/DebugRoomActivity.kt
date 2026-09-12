@@ -33,6 +33,9 @@ class DebugRoomActivity : AppCompatActivity() {
     private lateinit var clearButton: MaterialButton
 
     private val replyModes = listOf("AI 답장", "고정 답장")
+    private val selectedConfigName: String? get() = intent.getStringExtra("configName")
+    private fun selectedConfig(roomName: String) = selectedConfigName?.let { BotManager.getConfig(this, it) }
+        ?: BotManager.getConfigByRoomPattern(this, roomName)
     private val triggerModes = listOf("AI가 판단", "호출어/멘션만", "질문/명령만", "특정 키워드", "모든 메시지")
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +81,9 @@ class DebugRoomActivity : AppCompatActivity() {
             ?: ""
 
         editRoomName.setText(initialRoomName)
+        if (selectedConfig(initialRoomName)?.conversationId != null) {
+            editRoomName.isEnabled = false
+        }
         bindRoom(initialRoomName)
 
         clearButton.setOnClickListener {
@@ -108,7 +114,7 @@ class DebugRoomActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
-            val existingConfig = BotManager.getConfigByRoomPattern(this, roomName)
+            val existingConfig = selectedConfig(roomName)
             val baseConfig = existingConfig
                 ?: BotManager.getConfig(this, "기본 자동응답")
                 ?: AutoReplyJson.defaultConfig("기본 자동응답")
@@ -147,7 +153,7 @@ class DebugRoomActivity : AppCompatActivity() {
     }
 
     private fun bindRoom(roomName: String) {
-        val config = BotManager.getConfigByRoomPattern(this, roomName)
+        val config = selectedConfig(roomName)
         editMemory.setText(config?.roomMemory ?: AppSettings.getRoomMemory(this, roomName))
         editRoomStyle.setText(config?.roomStyle.orEmpty())
         spinnerReplyMode.setSelection(if (config?.replyMode.equals("canned", true)) 1 else 0)

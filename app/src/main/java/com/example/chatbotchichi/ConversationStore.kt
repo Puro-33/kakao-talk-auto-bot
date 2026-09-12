@@ -21,14 +21,15 @@ data class ConversationSummary(
     val captureEnabled: Boolean,
     val selfName: String?,
     val notificationKey: String?,
-    val messageCount: Int
+    val messageCount: Int,
+    val selectedByTitle: Boolean = false
 )
 
 data class ConversationImportResult(
     val inserted: Int, val duplicates: Int, val expired: Int, val warnings: List<String>
 )
 
-/** All writes are transactional. IDs are opaque: display titles never identify an imported room. */
+/** IDs are local and opaque. Title routing exists only after an explicit screen selection. */
 object ConversationStore {
     private const val GLOBAL = "global-own"
     private val worker = Executors.newSingleThreadScheduledExecutor()
@@ -82,11 +83,11 @@ object ConversationStore {
     @Synchronized fun listRooms(context: Context): List<ConversationSummary> = listRooms(database(context))
 
     private fun listRooms(db: SQLiteDatabase): List<ConversationSummary> = db.rawQuery(
-        "SELECT c.id,c.title,c.capture,c.self_name,c.notification_key,COUNT(m.id) FROM conversations c " +
+        "SELECT c.id,c.title,c.capture,c.self_name,c.notification_key,COUNT(m.id),c.selected_title FROM conversations c " +
             "LEFT JOIN messages m ON m.room_id=c.id GROUP BY c.id ORDER BY c.title,c.id", null
     ).use { cursor -> buildList {
         while (cursor.moveToNext()) add(ConversationSummary(cursor.getString(0), cursor.getString(1),
-            cursor.getInt(2) != 0, cursor.getString(3), cursor.getString(4), cursor.getInt(5)))
+            cursor.getInt(2) != 0, cursor.getString(3), cursor.getString(4), cursor.getInt(5), !cursor.isNull(6)))
     } }
 
     @Synchronized fun createRoom(context: Context, title: String): String {
@@ -94,11 +95,22 @@ object ConversationStore {
         return create(database(context), title.trim())
     }
 
-    private fun create(db: SQLiteDatabase, title: String, notificationKey: String? = null, legacyName: String? = null): String {
+    /** Binds future matching notification titles only; existing room histories are never merged. */
+    @Synchronized fun ensureScreenSelectedRoom(context: Context, title: String): String {
+        val selectedTitle = title.trim()
+        require(selectedTitle.isNotEmpty()) { "선택한 방 이름이 비어 있습니다." }
+        val db = database(context)
+        return scalar(db, "SELECT id FROM conversations WHERE selected_title=?", selectedTitle)
+            ?: create(db, selectedTitle, selectedTitle = selectedTitle)
+    }
+
+    private fun create(db: SQLiteDatabase, title: String, notificationKey: String? = null, legacyName: String? = null,
+        selectedTitle: String? = null): String {
         val id = UUID.randomUUID().toString()
         db.insertOrThrow("conversations", null, ContentValues().apply {
             put("id", id); put("title", title); put("capture", 0)
             put("notification_key", notificationKey); put("legacy_name", legacyName)
+            put("selected_title", selectedTitle)
         })
         return id
     }
@@ -107,6 +119,10 @@ object ConversationStore {
     @Synchronized fun observeNotification(context: Context, key: String, title: String): String {
         val db = database(context)
         require(key.isNotBlank())
+        // A title selection is an explicit, ambiguous title rule, not a fabricated Kakao ID.
+        // It takes precedence for future events without transferring old notification keys or messages.
+        val selected = scalar(db, "SELECT id FROM conversations WHERE selected_title=?", title.trim())
+        if (selected != null) return selected
         val found = scalar(db, "SELECT id FROM conversations WHERE notification_key=?", key)
         if (found != null) return found
         return create(db, title, notificationKey = key)
@@ -400,13 +416,14 @@ object ConversationStore {
     }
 }
 
-private class ConversationDatabase(context: Context) : SQLiteOpenHelper(context, "conversations.db", null, 1) {
+private class ConversationDatabase(context: Context) : SQLiteOpenHelper(context, "conversations.db", null, 2) {
     override fun onConfigure(db: SQLiteDatabase) {
         db.setForeignKeyConstraintsEnabled(true)
         db.rawQuery("PRAGMA secure_delete=ON", null).use { it.moveToFirst() }
     }
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE conversations (id TEXT PRIMARY KEY,title TEXT NOT NULL,capture INTEGER NOT NULL DEFAULT 0,self_name TEXT,notification_key TEXT UNIQUE,legacy_name TEXT UNIQUE)")
+        db.execSQL("CREATE TABLE conversations (id TEXT PRIMARY KEY,title TEXT NOT NULL,capture INTEGER NOT NULL DEFAULT 0,self_name TEXT,notification_key TEXT UNIQUE,legacy_name TEXT UNIQUE,selected_title TEXT)")
+        db.execSQL("CREATE UNIQUE INDEX conversations_selected_title ON conversations(selected_title)")
         db.execSQL("CREATE TABLE participants (room_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,name TEXT NOT NULL,PRIMARY KEY(room_id,name))")
         db.execSQL("CREATE TABLE messages (id INTEGER PRIMARY KEY AUTOINCREMENT,room_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,sender TEXT NOT NULL,body TEXT NOT NULL,sent_at INTEGER NOT NULL,kind TEXT NOT NULL,source TEXT NOT NULL,event_key TEXT NOT NULL,import_id TEXT,UNIQUE(room_id,event_key))")
         db.execSQL("CREATE INDEX messages_room_time ON messages(room_id,sent_at)")
@@ -416,6 +433,9 @@ private class ConversationDatabase(context: Context) : SQLiteOpenHelper(context,
         db.execSQL("CREATE TABLE migrations (marker TEXT PRIMARY KEY)")
     }
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        error("대화 DB 버전 변경에는 명시적인 마이그레이션이 필요합니다.")
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE conversations ADD COLUMN selected_title TEXT")
+            db.execSQL("CREATE UNIQUE INDEX conversations_selected_title ON conversations(selected_title)")
+        }
     }
 }

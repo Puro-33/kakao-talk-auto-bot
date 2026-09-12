@@ -43,7 +43,8 @@ object AppSettings {
         val name: String,
         val isEnabled: Boolean,
         val lastImportedAt: Long,
-        val lastImportSource: String?
+        val lastImportSource: String?,
+        val configName: String = name
     )
 
     enum class ThemeMode(val preferenceValue: String, val appCompatMode: Int) {

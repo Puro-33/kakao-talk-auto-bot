@@ -39,7 +39,8 @@ object AutoReplyEngine {
         config: AutoReplyConfig,
         conversationId: String = room
     ) {
-        if (!BotManager.findMatchingConfig(context, room, sender, message, isGroupChat)?.name.equals(config.name)) {
+        val selectedConfig = BotManager.findMatchingConfig(context, room, sender, message, isGroupChat, conversationId)
+        if (selectedConfig == null || selectedConfig.name != config.name || selectedConfig.conversationId != config.conversationId) {
             return
         }
         if (!config.replyEnabled) return
@@ -83,8 +84,9 @@ object AutoReplyEngine {
                 }
                 when {
                     !resolution.reply.isNullOrBlank() -> {
-                        if (!AppSettings.isAiReplyEnabled(context) ||
-                            BotManager.findMatchingConfig(context, room, sender, message, isGroupChat)?.replyEnabled != true) return@withLock
+                        val currentConfig = BotManager.findMatchingConfig(context, room, sender, message, isGroupChat, conversationId)
+                        if (!AppSettings.isAiReplyEnabled(context) || currentConfig?.replyEnabled != true ||
+                            currentConfig.name != config.name || currentConfig.conversationId != config.conversationId) return@withLock
                         val sendResult = ConversationStore.withReplyRevision(conversationId, revision) {
                             replier.replyToRoomDetailed(conversationId, resolution.reply)
                         } ?: return@withLock

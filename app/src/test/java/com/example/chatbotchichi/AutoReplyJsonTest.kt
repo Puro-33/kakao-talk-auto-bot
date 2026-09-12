@@ -6,6 +6,19 @@ import org.junit.Test
 
 class AutoReplyJsonTest {
     @Test
+    fun stableConversationBinding_roundTrips_withoutChangingDisplayTitle() {
+        val config = AutoReplyConfig(name = "같은 이름 (2)", roomPattern = "같은 이름", conversationId = "opaque-room-2")
+        assertEquals(config, AutoReplyJson.parse(AutoReplyJson.toJson(config)))
+    }
+
+    @Test
+    fun missingNullAndBlankBinding_remainLegacyTitleConfigs() {
+        for (binding in listOf("", ",\"conversationId\":null", ",\"conversationId\":\"  \"")) {
+            assertNull(AutoReplyJson.parse("{\"name\":\"기존 방\"$binding}").conversationId)
+        }
+    }
+
+    @Test
     fun defaultConfig_uses_llm_provider() {
         val config = AutoReplyJson.defaultConfig("테스트방")
 

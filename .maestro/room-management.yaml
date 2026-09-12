@@ -5,13 +5,41 @@ appId: com.example.kakaotalkautobot
 - tapOn: "대상 방 관리"
 - assertVisible: "새 대상 방 추가"
 - tapOn:
+    id: "btn_add_room"
+- assertVisible:
+    id: "room_selection_scroll"
+- scrollUntilVisible:
+    element:
+      id: "room_selection_confirm"
+    direction: DOWN
+- assertVisible:
+    id: "room_selection_confirm"
+    enabled: false
+- scrollUntilVisible:
+    element:
+      id: "room_selection_cancel"
+    direction: DOWN
+- tapOn:
+    id: "room_selection_cancel"
+- tapOn:
+    id: "btn_refresh_rooms"
+- assertVisible:
+    id: "room_selection_scroll"
+- scrollUntilVisible:
+    element:
+      id: "room_selection_cancel"
+    direction: DOWN
+- tapOn:
+    id: "room_selection_cancel"
+- tapOn:
+    id: "btn_manual_room"
+- tapOn:
     id: "input_room_name"
 - inputText: "test-room"
 - hideKeyboard
 - tapOn:
-    id: "btn_add_room"
+    id: "btn_manual_room"
 - assertVisible: "test-room"
-- hideKeyboard
 - scrollUntilVisible:
     element:
       id: "bot_secondary_action"
@@ -50,7 +78,7 @@ appId: com.example.kakaotalkautobot
     enabled: false
 - assertVisible: "학습 원본 삭제"
 - tapOn: "학습 원본 삭제"
-- assertVisible: "대화 파일 가져오기"
+- assertVisible: "수집할 카카오톡 방 선택"
 - pressKey: back
 - scrollUntilVisible:
     element:

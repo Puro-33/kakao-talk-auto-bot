@@ -1,5 +1,6 @@
 package com.example.kakaotalkautobot
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.View
@@ -42,6 +43,13 @@ class ConversationActivity : AppCompatActivity() {
         if (uri != null) inspectExport(uri)
     }
 
+    private val roomSelection = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            result.data?.getStringExtra(RoomSelectionActivity.EXTRA_ROOM_TITLE)
+                ?.trim()?.takeIf { it.isNotEmpty() }?.let(::confirmCapture)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         title = "대화 수집·말투 분석"
@@ -50,23 +58,34 @@ class ConversationActivity : AppCompatActivity() {
             setPadding(dp(20), dp(24), dp(20), dp(24))
         }
         setContentView(ScrollView(this).apply {
+            id = R.id.conversation_scroll
             fitsSystemWindows = true
             addView(content)
         })
         content.addView(label("대화 수집·말투 분석", 24f))
-        content.addView(label("카카오톡에서 내보낸 대화(.txt)를 가져오고 본인을 선택하면 말투를 자동 분석합니다. 수동 예문 입력은 선택 사항입니다."))
-        content.addView(label("알림으로는 상대방의 수신 메시지만 모을 수 있습니다. 직접 보낸 메시지의 말투를 최신화하려면 파일을 다시 가져오세요. 앱이 생성 이력을 확인한 AI 답장은 말투 표본에서 제외합니다."))
-        content.addView(label("최근 90일의 대화를 기기 안에서 분석합니다. 수집과 자동답장은 별개이며, 새 방의 알림 수집은 기본 OFF입니다."))
-        content.addView(button("대화 파일 가져오기") {
-            openExport.launch(arrayOf("text/plain", "application/octet-stream"))
-        })
-        content.addView(button("방 목록 새로고침") { refresh() })
+        content.addView(label(getString(R.string.conversation_collection_intro)))
+        content.addView(button(getString(R.string.select_capture_room)) {
+            roomSelection.launch(Intent(this, RoomSelectionActivity::class.java))
+        }.apply { id = R.id.btn_select_capture_room })
+        content.addView(button(getString(R.string.refresh_room_list), outlined = true) {
+            roomSelection.launch(Intent(this, RoomSelectionActivity::class.java))
+        }
+            .apply { id = R.id.btn_refresh_conversations })
         status = label("불러오는 중…")
+        status.id = R.id.conversation_status
         status.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
         content.addView(status)
         roomList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(roomList)
-        refresh()
+        content.addView(label(getString(R.string.conversation_history_optional)))
+        content.addView(button(getString(R.string.import_past_conversation), outlined = true) {
+            openExport.launch(arrayOf("text/plain", "application/octet-stream"))
+        }.apply { id = R.id.btn_import_past_conversation })
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (::content.isInitialized && ::status.isInitialized && !busy) refresh()
     }
 
     override fun onDestroy() {
@@ -84,6 +103,20 @@ class ConversationActivity : AppCompatActivity() {
         rows.forEach { (room, preview) -> renderRoom(room, preview) }
     }
 
+    private fun confirmCapture(title: String) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.capture_room_confirm_title)
+            .setMessage(getString(R.string.capture_room_confirm_message, title))
+            .setPositiveButton(R.string.capture_start) { _, _ ->
+                background(getString(R.string.capture_saving), {
+                    val roomId = ConversationStore.ensureScreenSelectedRoom(applicationContext, title)
+                    ConversationStore.setCaptureEnabled(applicationContext, roomId, true)
+                }) { refresh() }
+            }
+            .setNegativeButton(R.string.capture_cancel, null)
+            .show()
+    }
+
     private fun renderRoom(room: ConversationSummary, preview: String) {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -91,12 +124,12 @@ class ConversationActivity : AppCompatActivity() {
         }
         panel.addView(label(roomLabel(room), 20f))
         panel.addView(label("저장 ${room.messageCount}개 · 본인: ${room.selfName ?: "미선택"}\n" +
-            if (room.notificationKey == null) "알림 방 연결 안 됨" else "알림 방 연결됨"))
+            if (room.selectedByTitle) getString(R.string.room_selected_title_binding) else if (room.notificationKey == null) "알림 방 연결 안 됨" else "알림 방 연결됨"))
         val capture = SwitchMaterial(this).apply {
             setText(R.string.conversation_capture_notifications)
             minHeight = dp(48)
             isChecked = room.captureEnabled
-            isEnabled = room.notificationKey != null
+            isEnabled = room.notificationKey != null || room.selectedByTitle
             setOnCheckedChangeListener { _, enabled ->
                 background("수집 설정을 저장하는 중…", {
                     runCatching { ConversationStore.setCaptureEnabled(applicationContext, room.id, enabled) }.isSuccess
@@ -112,7 +145,7 @@ class ConversationActivity : AppCompatActivity() {
         }
         panel.addView(capture)
         panel.addView(label(preview.ifBlank { "분석할 본인 발화가 부족합니다. 대화 파일을 가져와 주세요." }))
-        if (room.notificationKey == null) {
+        if (room.notificationKey == null && !room.selectedByTitle) {
             panel.addView(button("알림 방 연결") { chooseNotificationRoom(room) })
         }
         panel.addView(button("학습 데이터 삭제") { confirmDelete(room) })
@@ -250,7 +283,7 @@ class ConversationActivity : AppCompatActivity() {
             .decode(ByteBuffer.wrap(bytes)).toString().removePrefix("\uFEFF")
     }
 
-    private fun <T> background(message: String, work: () -> T, complete: (T) -> Unit) {
+    private fun <T> background(message: String, work: suspend () -> T, complete: (T) -> Unit) {
         if (busy) return
         busy = true
         setControlsEnabled(content, false)
@@ -290,7 +323,10 @@ class ConversationActivity : AppCompatActivity() {
         textSize = size
         setPadding(0, dp(8), 0, dp(8))
     }
-    private fun button(value: String, action: () -> Unit) = MaterialButton(this).apply {
+    private fun button(value: String, outlined: Boolean = false, action: () -> Unit) = MaterialButton(
+        this, null, if (outlined) com.google.android.material.R.attr.materialButtonOutlinedStyle
+            else com.google.android.material.R.attr.materialButtonStyle
+    ).apply {
         text = value
         minHeight = dp(48)
         layoutParams = LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)

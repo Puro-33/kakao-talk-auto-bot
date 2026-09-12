@@ -62,7 +62,6 @@
     <string name="action_save">저장</string>
     <string name="action_remove">제거</string>
     <string name="recent_logs_title">최근 로그</string>
-    <string name="action_add">추가</string>
     <string name="reply_all_rooms_description">켜면 특정 방을 지정하지 않아도 모든 채팅방에서 AI가 답장합니다.</string>
     <string name="persona_hint">페르소나 / 답장 톤</string>
     <string name="action_delete_learned_source">학습 원본 삭제</string>

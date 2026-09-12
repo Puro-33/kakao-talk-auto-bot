@@ -16,7 +16,9 @@
   - JUnit 결과, debug output, 테스트 아티팩트, logcat 업로드
 - `Conversation storage tests`
   - push / pull request / 수동 실행에서 Ubuntu + KVM, API 29 x86_64 사용
-  - `ConversationStoreInstrumentedTest`로 실제 SQLite 저장·가져오기·중복·삭제·방 식별 등의 동작을 검사
+  - 단일 runner 필터 `ConversationStorageSuite`로 SQLite·방 목록 갱신·방 설정 연결 테스트를 함께 실행
+  - 현재 예상 실행은 `ConversationStoreInstrumentedTest` 13개, `RoomTargetAdapterInstrumentedTest` 2개, `BotManagerRoomBindingInstrumentedTest` 4개로 총 19개이며 세 클래스 모두 결과에 존재하는지 추가 검사
+  - 쉼표로 여러 클래스를 전달하지 않으며, 모델 다운로드·추론이 포함된 `ExampleInstrumentedTest` 전체는 이 suite에서 제외
   - Android instrumentation 결과와 HTML 보고서 업로드
   - 성공 시 같은 작업에서 빌드한 debug 앱·instrumentation APK를 `device-test-apks`로 업로드해 실기기에서 재검증 가능
 
@@ -72,3 +74,6 @@ AGP 9.4.0, Gradle 9.7.1, AGP 내장 Kotlin(컴파일러 2.4.20), compile/target 
 Lint 경고는 오류로 처리합니다. CI는 APK 가짜 토큰 포함 검사와 XML/HTML Lint 보고서를 제공합니다. Maestro는 앱 소스·리소스·빌드 의존성 변경에도 실행합니다.
 
 공식 근거: [AGP 호환성](https://developer.android.com/build/releases/agp-9-4-0-release-notes), [내장 Kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin), [Android 17](https://developer.android.com/about/versions/17/setup-sdk), [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/releases/tag/v0.17.0).
+
+
+방 선택 회귀에는 BotManagerRoomBindingInstrumentedTest를 포함합니다. 새로고침 테스트는 알림 메시지를 재전송하지 않으며, CI의 빈 방 선택 목록 검사와 실기기의 실제 방 목록 검증을 구분합니다.

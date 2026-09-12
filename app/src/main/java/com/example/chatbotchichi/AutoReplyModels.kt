@@ -31,7 +31,8 @@ data class AutoReplyConfig(
     val cannedReplies: List<String> = emptyList(),
     val trigger: TriggerConfig = TriggerConfig(),
     val provider: ProviderConfig = ProviderConfig(),
-    val importHistory: String = ""
+    val importHistory: String = "",
+    val conversationId: String? = null
 )
 
 object AutoReplyJson {
@@ -81,7 +82,9 @@ object AutoReplyJson {
                 authMode = providerJson.optString("authMode", "local")
                 )
             ),
-            importHistory = json.optString("importHistory", "")
+            importHistory = json.optString("importHistory", ""),
+            conversationId = if (json.isNull("conversationId")) null else
+                json.optString("conversationId", "").trim().takeIf { it.isNotEmpty() }
         )
     }
 
@@ -90,6 +93,7 @@ object AutoReplyJson {
         val json = JSONObject()
             .put("name", config.name)
             .put("roomPattern", config.roomPattern)
+            .put("conversationId", config.conversationId ?: JSONObject.NULL)
             .put("enabled", config.enabled)
             .put("captureEnabled", config.captureEnabled)
             .put("replyEnabled", config.replyEnabled)

@@ -37,7 +37,30 @@ jobs:
           api-level: 29
           arch: x86_64
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStoreInstrumentedTest,com.example.kakaotalkautobot.RoomTargetAdapterInstrumentedTest,com.example.kakaotalkautobot.ExampleInstrumentedTest#testModelIdentityUsesConfiguredMetadata --console=plain
+          script: ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStorageSuite --console=plain
+      - name: Verify every suite class produced test results
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          expected = {
+              "com.example.kakaotalkautobot.ConversationStoreInstrumentedTest",
+              "com.example.kakaotalkautobot.RoomTargetAdapterInstrumentedTest",
+              "com.example.kakaotalkautobot.BotManagerRoomBindingInstrumentedTest",
+          }
+          counts = dict.fromkeys(expected, 0)
+          for report in Path("app/build/outputs/androidTest-results/connected").rglob("*.xml"):
+              for case in ET.parse(report).getroot().iter("testcase"):
+                  name = case.get("classname")
+                  if name in counts and case.find("skipped") is None:
+                      counts[name] += 1
+          for name, count in sorted(counts.items()):
+              print(f"{name}: {count} executed tests")
+          missing = [name for name, count in counts.items() if count == 0]
+          if missing:
+              raise SystemExit(f"Suite classes missing from executed results: {missing}")
+          PY
       - uses: actions/upload-artifact@v4
         if: always()
         with:
