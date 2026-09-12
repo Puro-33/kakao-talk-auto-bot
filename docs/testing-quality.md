@@ -355,3 +355,9 @@ UI 문구를 바꾸면 관련 Maestro 흐름도 같이 고쳐야 합니다.
 - 위 네 가지 중 하나라도 빠지면 상태는 "빌드/테스트 통과, 런타임 미검증" 으로 기록합니다.
 
 `scripts/verify-real-device-e2e.sh` 는 위 1-4번 중 모델 다운로드/해시/로드/생성까지 자동 검증합니다. 실제 카카오톡 메시지 수신과 RemoteInput 자동 전송은 다른 카카오톡 계정에서 메시지를 보내고 앱 로그의 `IN`/`OUT` 과 카카오톡 대화창 표시가 일치하는지 별도로 확인해야 합니다.
+
+## Lint 및 모델 회귀 검사
+
+Lint 경고도 CI 실패로 처리하며 baseline이나 일괄 제외를 사용하지 않습니다. ModelIdentityTest는 직접 모델명 질문, 잘못된 전제, 일반 주제 구분과 다섯 프롬프트를 검사합니다. testModelIdentityUsesConfiguredMetadata는 정확한 모델명을 검사합니다. testDefaultModelGeneratesKoreanOnDevice는 기본 모델을 로드해 실제 한국어 생성을 검사하며 ARM64 실기기가 필요합니다. RoomTargetAdapterInstrumentedTest는 호출자 목록 변경, 개별 행 갱신과 메모 변경을 검사합니다.
+
+CI는 공개 가짜 토큰을 환경 변수와 .env에 설정해 Debug/Release APK를 만듭니다. scripts/verify-apk-privacy.py는 압축을 푼 내부 파일에서 해당 토큰의 UTF-8/UTF-16 포함 여부를 검사합니다. 실제 토큰을 사용하지 않으며 모든 종류의 비밀정보 부재를 증명하는 검사는 아닙니다.

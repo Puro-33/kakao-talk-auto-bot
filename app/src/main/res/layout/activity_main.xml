@@ -4,7 +4,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackground"
     android:fillViewport="true"
     android:fitsSystemWindows="true"
     android:padding="@dimen/space_5">
@@ -54,7 +53,7 @@
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="상태"
+                            android:text="@string/status_label"
                             android:textColor="@color/colorTextSecondary"
                             android:textSize="11sp"
                             android:textStyle="bold" />
@@ -63,7 +62,7 @@
                             android:id="@+id/status_text"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="알림 접근 필요"
+                            android:text="@string/notification_access_required"
                             android:textColor="@color/colorTextPrimary"
                             android:textSize="20sp"
                             android:textStyle="bold" />
@@ -75,7 +74,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
-                    android:text="디바이스: 미설정"
+                    android:text="@string/device_unset"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp"
                     tools:text="디바이스: Android 테스트폰" />
@@ -85,7 +84,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="대상 방 0개 · 최근 감지 방 0개"
+                    android:text="@string/room_counts_initial"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp"
                     tools:text="대상 방 3개 · 최근 감지 방 8개" />
@@ -95,7 +94,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="수신 0 · 전송 0 · 스킵 0 · 실패 0"
+                    android:text="@string/reply_stats_initial"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -113,7 +112,7 @@
                         android:layout_height="@dimen/touch_target"
                         android:layout_marginEnd="@dimen/space_2"
                         android:layout_weight="1"
-                        android:text="권한 설정"
+                        android:text="@string/permission_settings"
                         android:textColor="@color/colorTextPrimary"
                         app:strokeColor="@color/colorBorder" />
 
@@ -123,7 +122,7 @@
                         android:layout_width="0dp"
                         android:layout_height="@dimen/touch_target"
                         android:layout_weight="1"
-                        android:text="대상 방 관리"
+                        android:text="@string/room_management_title"
                         android:textColor="@color/colorTextPrimary"
                         app:strokeColor="@color/colorBorder" />
                 </LinearLayout>
@@ -139,7 +138,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="AI 자동 답장"
+                        android:text="@string/auto_reply"
                         android:textColor="@color/colorTextPrimary"
                         android:textSize="15sp"
                         android:textStyle="bold" />
@@ -156,7 +155,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="OFF여도 메시지는 계속 수집하고 세션을 유지합니다."
+                    android:text="@string/auto_reply_off_description"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="12sp" />
 
@@ -164,7 +163,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_5"
-                    android:text="화면 모드"
+                    android:text="@string/theme_mode_label"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -231,7 +230,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="응답 설정"
+                    android:text="@string/reply_settings_title"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -269,12 +268,12 @@
                     android:layout_height="wrap_content"
                     android:minHeight="@dimen/touch_target"
                     android:layout_marginTop="@dimen/space_4"
-                    android:text="대화 수집·말투 분석" />
+                    android:text="@string/conversation_collection" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="대화 파일에서 내 말투를 자동 분석합니다. 수동 예문과 말투 설정은 선택 사항입니다."
+                    android:text="@string/conversation_collection_description"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -284,7 +283,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/touch_target"
                     android:layout_marginTop="@dimen/space_4"
-                    android:text="응답 설정 편집"
+                    android:text="@string/action_edit_reply_settings"
                     android:textColor="@color/colorTextPrimary"
                     app:strokeColor="@color/colorBorder" />
             </LinearLayout>
@@ -310,7 +309,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="대상 방"
+                    android:text="@string/target_room"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -329,7 +328,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="대화 파일은 대화 수집·말투 분석에서 가져올 수 있습니다."
+                    android:text="@string/conversation_import_help"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -347,7 +346,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="아직 대상 방이 없습니다. 답장할 방을 추가하세요. 대화 수집은 별도로 선택할 수 있습니다."
+                    android:text="@string/target_rooms_home_empty"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp"
                     android:visibility="gone" />
@@ -380,7 +379,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="최근 로그"
+                        android:text="@string/recent_logs_title"
                         android:textColor="@color/colorTextPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -391,7 +390,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="@dimen/compact_button_height"
                         android:layout_marginEnd="@dimen/space_2"
-                        android:text="삭제"
+                        android:text="@string/action_delete"
                         android:textColor="@color/colorDanger"
                         app:strokeColor="@color/colorDanger" />
 
@@ -400,7 +399,7 @@
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="wrap_content"
                         android:layout_height="@dimen/compact_button_height"
-                        android:text="복사"
+                        android:text="@string/action_copy"
                         android:textColor="@color/colorTextPrimary"
                         app:strokeColor="@color/colorBorder" />
                 </LinearLayout>
@@ -411,26 +410,30 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
                     android:checked="true"
-                    android:text="로그 복사 시 방/발화자/메시지 가리기"
+                    android:text="@string/redact_logs_label"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="13sp" />
 
-                <TextView
-                    android:id="@+id/log_text"
+                <androidx.core.widget.NestedScrollView
+                    android:id="@+id/log_scroll"
                     android:layout_width="match_parent"
                     android:layout_height="@dimen/log_height"
                     android:layout_marginTop="@dimen/space_3"
                     android:background="@drawable/bg_panel"
-                    android:fontFamily="monospace"
-                    android:gravity="top|start"
-                    android:lineSpacingExtra="@dimen/space_1"
-                    android:overScrollMode="always"
                     android:padding="@dimen/space_3"
-                    android:scrollbarStyle="insideInset"
-                    android:scrollbars="vertical"
-                    android:text="아직 수집된 로그가 없습니다."
-                    android:textColor="@color/colorTextPrimary"
-                    android:textSize="11sp" />
+                    android:scrollbars="vertical">
+
+                    <TextView
+                        android:id="@+id/log_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:gravity="top|start"
+                        android:lineSpacingExtra="@dimen/space_1"
+                        android:text="@string/logs_empty"
+                        android:textColor="@color/colorTextPrimary"
+                        android:textSize="11sp" />
+                </androidx.core.widget.NestedScrollView>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>

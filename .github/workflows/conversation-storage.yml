@@ -37,7 +37,7 @@ jobs:
           api-level: 29
           arch: x86_64
           disable-animations: true
-          script: ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStoreInstrumentedTest --console=plain
+          script: ./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.kakaotalkautobot.ConversationStoreInstrumentedTest,com.example.kakaotalkautobot.RoomTargetAdapterInstrumentedTest,com.example.kakaotalkautobot.ExampleInstrumentedTest#testModelIdentityUsesConfiguredMetadata --console=plain
       - uses: actions/upload-artifact@v4
         if: always()
         with:

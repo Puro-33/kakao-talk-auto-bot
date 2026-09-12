@@ -157,7 +157,7 @@ class DebugRoomActivity : AppCompatActivity() {
         editBlockedSenders.setText(config?.blockedSenders?.joinToString("\n").orEmpty())
         editCannedReplies.setText(config?.cannedReplies?.joinToString("\n").orEmpty())
 
-        roomMetaText.text = "직접 입력한 메모와 말투는 이 방 이름의 응답 설정에 적용됩니다. 자동 분석은 대화 수집·말투 분석에서 확인하세요."
+        roomMetaText.setText(R.string.room_configuration_guidance)
         bindLearnedRoomStyle(roomName)
     }
 
@@ -168,9 +168,12 @@ class DebugRoomActivity : AppCompatActivity() {
         editLearnedRoomStyle.setText(state.override)
         resetLearnedRoomStyleButton.text = state.resetOverrideButtonLabel
         resetLearnedRoomStyleButton.isEnabled = state.hasManualOverride
-        learnedRoomStylePreview.text = "자동 말투 미리보기와 원본 삭제는 대화 수집·말투 분석에서 실제 방을 선택하세요. " +
-            "같은 이름의 방을 자동으로 연결하지 않습니다." +
-            if (state.hasManualOverride) "\n수동 수정값: ${state.override}" else ""
+        learnedRoomStylePreview.text = if (state.hasManualOverride) {
+            getString(R.string.room_style_preview_with_override,
+                getString(R.string.room_style_preview_guidance), state.override)
+        } else {
+            getString(R.string.room_style_preview_guidance)
+        }
     }
 
     private fun configureSpinner(spinner: Spinner, items: List<String>) {

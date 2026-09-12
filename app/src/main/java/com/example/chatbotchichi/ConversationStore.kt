@@ -2,6 +2,7 @@ package com.example.kakaotalkautobot
 
 import android.content.ContentValues
 import android.content.Context
+import androidx.core.content.edit
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import org.json.JSONObject
@@ -313,7 +314,11 @@ object ConversationStore {
         }
         // Clear independent legacy copies once; preserve manual settings and conversation files that failed migration.
         if (scalar(db, "SELECT marker FROM migrations WHERE marker=?", "derived-privacy-v1") == null) {
-            context.getSharedPreferences("AutoMemoryPrefs", Context.MODE_PRIVATE).edit().clear().commit()
+            // Persist removal before recording the migration marker; an asynchronous write
+            // could leave the legacy privacy copy behind after a process interruption.
+            context.getSharedPreferences("AutoMemoryPrefs", Context.MODE_PRIVATE).edit(commit = true) {
+                clear()
+            }
             LogStore.clear(context)
             db.insertOrThrow("migrations", null, ContentValues().apply { put("marker", "derived-privacy-v1") })
         }

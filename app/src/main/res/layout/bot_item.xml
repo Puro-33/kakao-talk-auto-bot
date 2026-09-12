@@ -27,7 +27,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="대상 방"
+                android:text="@string/target_room"
                 android:textColor="@color/colorTextPrimary"
                 android:textSize="16sp"
                 android:textStyle="bold" />
@@ -45,7 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_2"
-            android:text="메모 없음 · CSV 미가져옴"
+            android:text="@string/room_summary_empty"
             android:textColor="@color/colorTextSecondary"
             android:textSize="13sp" />
 
@@ -62,7 +62,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/compact_button_height"
                 android:layout_marginEnd="@dimen/space_2"
-                android:text="메모"
+                android:text="@string/action_memo"
                 android:textColor="@color/colorTextPrimary"
                 app:strokeColor="@color/colorBorder" />
 
@@ -71,7 +71,7 @@
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/compact_button_height"
-                android:text="제거"
+                android:text="@string/action_remove"
                 android:textColor="@color/colorDanger"
                 app:strokeColor="@color/colorBorder" />
         </LinearLayout>

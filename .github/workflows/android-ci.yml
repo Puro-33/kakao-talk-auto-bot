@@ -39,7 +39,14 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run quality gates
-        run: ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease --console=plain
+        env:
+          HF_TOKEN: hf_CI_ONLY_DO_NOT_EMBED_9f3427e1
+        run: |
+          printf '%s\n' 'HF_TOKEN=hf_CI_ONLY_DO_NOT_EMBED_9f3427e1' > .env
+          ./gradlew testDebugUnitTest lintDebug assembleDebug assembleRelease --console=plain
+
+      - name: Verify APKs do not embed build credentials
+        run: python3 scripts/verify-apk-privacy.py app/build/outputs/apk/debug/*.apk app/build/outputs/apk/release/*.apk
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
@@ -59,4 +66,5 @@ jobs:
             app/build/reports/tests/**
             app/build/test-results/**
             app/build/reports/lint-results-*.html
+            app/build/reports/lint-results-*.xml
             app/build/intermediates/lint_intermediate_text_report/**

@@ -60,7 +60,15 @@
 ## JDK
 
 - 이 저장소의 Gradle/Kotlin 조합은 **JDK 21 기준**으로 검증합니다.
-- 기본 `java` 가 JDK 25 이상이면 Gradle Kotlin DSL 초기화 단계에서 실패할 수 있습니다.
-- `gradlew` bootstrap 단계에서 호환 가능한 JDK 21을 먼저 찾고, 없으면 JDK 17, JDK 11 순으로 fallback 합니다.
+- 기본 `java`가 프로젝트의 재현 가능한 bootstrap 범위(17–23)를 벗어나면 검증 기준 JDK로 전환합니다.
+- `gradlew` bootstrap은 JDK 21을 먼저 찾고 없으면 JDK 17로 fallback 합니다. Gradle 9에는 JDK 17 이상이 필요합니다.
 - JDK 기준을 바꾸면 `gradlew` 의 bootstrap 탐색 순서와 README 안내를 함께 갱신해야 합니다.
 - CI와 로컬 개발 모두 가능하면 `JAVA_HOME` 을 JDK 21로 고정하는 것을 권장합니다.
+
+## 빌드 도구와 품질 게이트
+
+AGP 9.4.0, Gradle 9.6.0, AGP 내장 Kotlin, compile/target SDK 37을 사용합니다. CI JDK는 21, 앱 바이트코드 대상은 11입니다. 의존성은 gradle/libs.versions.toml에 고정하며 LiteRT-LM은 0.17.0입니다. org.json은 JVM testImplementation에만 포함합니다.
+
+Lint 경고는 오류로 처리합니다. CI는 APK 가짜 토큰 포함 검사와 XML/HTML Lint 보고서를 제공합니다. Maestro는 앱 소스·리소스·빌드 의존성 변경에도 실행합니다.
+
+공식 근거: [AGP 호환성](https://developer.android.com/build/releases/agp-9-4-0-release-notes), [내장 Kotlin](https://developer.android.com/build/migrate-to-built-in-kotlin), [Android 17](https://developer.android.com/about/versions/17/setup-sdk), [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM/releases/tag/v0.17.0).

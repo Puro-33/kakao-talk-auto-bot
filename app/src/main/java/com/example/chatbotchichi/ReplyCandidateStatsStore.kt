@@ -1,6 +1,7 @@
 package com.example.kakaotalkautobot
 
 import android.content.Context
+import androidx.core.content.edit
 import org.json.JSONObject
 
 object ReplyCandidateStatsStore {
@@ -86,7 +87,7 @@ object ReplyCandidateStatsStore {
             stats.put("maxLatencyMs", maxOf(stats.optLong("maxLatencyMs", 0L), latencyMs))
             root.put(source, stats)
         }
-        prefs.edit().putString(KEY_COUNTS, root.toString()).apply()
+        prefs.edit { putString(KEY_COUNTS, root.toString()) }
     }
 
     fun snapshot(context: Context): Snapshot {
@@ -95,10 +96,9 @@ object ReplyCandidateStatsStore {
     }
 
     fun clear(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .remove(KEY_COUNTS)
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            remove(KEY_COUNTS)
+        }
     }
 
     internal fun snapshotFromJson(root: JSONObject): Snapshot {

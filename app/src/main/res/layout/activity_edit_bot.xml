@@ -4,7 +4,6 @@
     android:id="@+id/edit_bot_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackground"
     android:fillViewport="true"
     android:padding="@dimen/space_5">
 
@@ -16,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="AI 답장 설정"
+            android:text="@string/settings_title"
             android:textColor="@color/colorTextPrimary"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -26,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_1"
             android:layout_marginBottom="@dimen/space_5"
-            android:text="이름, 말투, 로컬 Gemma 답장 조건을 간단하게 설정합니다."
+            android:text="@string/settings_description"
             android:textColor="@color/colorTextSecondary"
             android:textSize="13sp" />
 
@@ -49,7 +48,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="내 정보"
+                    android:text="@string/user_info_title"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -59,7 +58,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="내 이름 또는 대표 닉네임">
+                    android:hint="@string/user_name_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_display_name"
@@ -74,7 +73,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="페르소나 / 답장 톤">
+                    android:hint="@string/persona_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_persona"
@@ -90,7 +89,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="내 말투 예시">
+                    android:hint="@string/style_examples_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_persona_examples"
@@ -107,7 +106,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
                     android:checked="true"
-                    android:text="학습된 내 말투 사용"
+                    android:text="@string/use_learned_user_style"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="14sp" />
 
@@ -116,7 +115,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="자동 추출된 내 말투가 아직 없습니다."
+                    android:text="@string/learned_user_style_empty"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -125,7 +124,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="학습된 내 말투 수정">
+                    android:hint="@string/edit_learned_user_style_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_learned_user_style"
@@ -142,7 +141,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="수정 초기화"
+                    android:text="@string/action_reset_edits"
                     android:textColor="@color/colorTextPrimary"
                     app:strokeColor="@color/colorBorder" />
             </LinearLayout>
@@ -167,7 +166,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="응답 엔진"
+                    android:text="@string/reply_engine_title"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -176,7 +175,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="로컬 응답 엔진"
+                    android:text="@string/local_engine_label"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -185,7 +184,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="Gemma 4 로컬 모델만 사용합니다."
+                    android:text="@string/provider_summary"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="14sp" />
 
@@ -194,7 +193,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="모델 상태 확인 중..."
+                    android:text="@string/model_status_checking"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="15sp"
                     android:textStyle="bold" />
@@ -204,7 +203,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="현재 메시지, 최근 대화와 직접 입력한 방 메모를 근거로 답장합니다. 수동 예시와 자동 분석한 말투는 표현 형식에만 참고합니다."
+                    android:text="@string/grounding_summary"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -212,7 +211,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="기기 안의 Gemma 4 LiteRT-LM 모델로 답장하며, 인터넷 연결 없이 동작합니다."
+                    android:text="@string/local_model_description"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -222,7 +221,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="Gemma 4 다운로드 (~2.58GB)"
+                    android:text="@string/model_download_default"
                     android:textColor="@color/colorPrimary"
                     app:strokeColor="@color/colorPrimary" />
 
@@ -263,7 +262,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="답장 동작"
+                    android:text="@string/reply_behavior_title"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -272,7 +271,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="답장 방식"
+                    android:text="@string/reply_mode_label"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -286,7 +285,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="반응 조건"
+                    android:text="@string/trigger_mode_label"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -304,7 +303,7 @@
             android:layout_height="@dimen/touch_target"
             android:layout_marginTop="@dimen/space_5"
             android:backgroundTint="@color/colorPrimary"
-            android:text="설정 저장"
+            android:text="@string/action_save_settings"
             android:textColor="@color/colorOnPrimary" />
     </LinearLayout>
 

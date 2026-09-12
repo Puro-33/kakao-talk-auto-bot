@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingStart="8dp"
@@ -20,6 +21,8 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:src="@mipmap/ic_launcher_round"
+            android:contentDescription="@null"
+            android:importantForAccessibility="no"
             android:layout_marginEnd="8dp"/>
 
         <LinearLayout
@@ -31,7 +34,7 @@
                 android:id="@+id/text_name_left"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="봇"
+                tools:text="봇"
                 android:textSize="12sp"
                 android:textColor="#555555"
                 android:layout_marginBottom="2dp"/>
@@ -41,7 +44,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_chat_other"
-                android:text="메시지 내용"
+                tools:text="메시지 내용"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
                 android:paddingTop="8dp"
@@ -55,8 +58,8 @@
             android:id="@+id/text_time_left"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="12:00"
-            android:textSize="10sp"
+            tools:text="12:00"
+            android:textSize="12sp"
             android:textColor="#888888"
             android:layout_gravity="bottom"
             android:layout_marginStart="4dp"/>
@@ -75,8 +78,8 @@
             android:id="@+id/text_time_right"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="12:00"
-            android:textSize="10sp"
+            tools:text="12:00"
+            android:textSize="12sp"
             android:textColor="#888888"
             android:layout_gravity="bottom"
             android:layout_marginEnd="4dp"/>
@@ -86,7 +89,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_chat_me"
-            android:text="메시지 내용"
+            tools:text="메시지 내용"
             android:paddingStart="12dp"
             android:paddingEnd="12dp"
             android:paddingTop="8dp"

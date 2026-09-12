@@ -29,8 +29,6 @@ class EditBotActivity : AppCompatActivity() {
     private lateinit var btnDownloadModel: Button
     private lateinit var progressModelDownload: ProgressBar
     private lateinit var textDownloadProgress: TextView
-    private lateinit var textGroundingSummary: TextView
-    private lateinit var textProviderSummary: TextView
     private lateinit var spinnerReplyMode: Spinner
     private lateinit var spinnerTriggerMode: Spinner
     private lateinit var btnSave: Button
@@ -54,8 +52,6 @@ class EditBotActivity : AppCompatActivity() {
         btnDownloadModel = findViewById(R.id.btn_download_model)
         progressModelDownload = findViewById(R.id.progress_model_download)
         textDownloadProgress = findViewById(R.id.text_download_progress)
-        textGroundingSummary = findViewById(R.id.text_grounding_summary)
-        textProviderSummary = findViewById(R.id.text_provider_summary)
         spinnerReplyMode = findViewById(R.id.spinner_reply_mode)
         spinnerTriggerMode = findViewById(R.id.spinner_trigger_mode)
         btnSave = findViewById(R.id.btn_save)
@@ -66,7 +62,6 @@ class EditBotActivity : AppCompatActivity() {
 
         bindCurrentConfig()
         updateModelStatus()
-        updateProviderSummary()
 
         btnDownloadModel.setOnClickListener {
             if (!LlmEngine.isRuntimeSupportedOnCurrentDevice()) {
@@ -95,32 +90,27 @@ class EditBotActivity : AppCompatActivity() {
     private fun updateModelStatus() {
         val info = LlmModelManager.getModelInfo(this, LlmModelManager.DEFAULT_MODEL)
         if (!LlmEngine.isRuntimeSupportedOnCurrentDevice()) {
-            textModelStatus.text = "⚠️ 에뮬레이터에서는 Gemma/LiteRT-LM 실행이 지원되지 않습니다. ARM64 실기기에서 사용해 주세요."
+            textModelStatus.setText(R.string.model_runtime_unsupported)
             textModelStatus.setTextColor(getColor(R.color.colorWarning))
-            btnDownloadModel.text = "실기기에서 다운로드 가능"
+            btnDownloadModel.setText(R.string.model_download_device_only)
             btnDownloadModel.isEnabled = false
         } else if (info.matchesExpectedSource) {
-            val checksum = if (info.checksumVerified) " · 해시 검증됨" else " · 해시 검증 대기"
-            textModelStatus.text = "✅ Gemma 4 준비됨 (${info.sizeMb}MB$checksum)"
+            val checksum = getString(if (info.checksumVerified) R.string.model_checksum_verified else R.string.model_checksum_pending)
+            textModelStatus.text = getString(R.string.model_ready, info.sizeMb, checksum)
             textModelStatus.setTextColor(getColor(R.color.colorSuccess))
-            btnDownloadModel.text = "모델 재다운로드"
+            btnDownloadModel.setText(R.string.model_download_again)
             btnDownloadModel.isEnabled = true
         } else if (info.exists) {
-            textModelStatus.text = "⚠️ 모델 검증 실패 (${info.sizeMb}MB) · ${info.validationMessage} · 기본 모델 다운로드 필요"
+            textModelStatus.text = getString(R.string.model_validation_failed, info.sizeMb, info.validationMessage)
             textModelStatus.setTextColor(getColor(R.color.colorWarning))
-            btnDownloadModel.text = "Gemma 4 다운로드 (~2.58GB)"
+            btnDownloadModel.setText(R.string.model_download_default)
             btnDownloadModel.isEnabled = true
         } else {
-            textModelStatus.text = "⚠️ Gemma 4 모델이 필요합니다"
+            textModelStatus.setText(R.string.model_required)
             textModelStatus.setTextColor(getColor(R.color.colorDanger))
-            btnDownloadModel.text = "Gemma 4 다운로드 (~2.58GB)"
+            btnDownloadModel.setText(R.string.model_download_default)
             btnDownloadModel.isEnabled = true
         }
-    }
-
-    private fun updateProviderSummary() {
-        textProviderSummary.text = "Gemma 4 로컬 모델만 사용합니다. 모델 실행은 ARM64 실기기 기준입니다."
-        textGroundingSummary.text = "현재 메시지, 사용자 예시, 방별 말투, 최근 대화, 방 메모, 자동 메모리 요약을 함께 참고해 답장합니다."
     }
 
     private fun downloadModel() {
@@ -138,7 +128,7 @@ class EditBotActivity : AppCompatActivity() {
                 this@EditBotActivity,
                 onProgress = { progress ->
                     progressModelDownload.progress = progress
-                    textDownloadProgress.text = "다운로드 중... $progress%"
+                    textDownloadProgress.text = getString(R.string.model_download_progress, progress)
                 }
             ).onSuccess { file ->
                 progressModelDownload.visibility = View.GONE
@@ -195,7 +185,6 @@ class EditBotActivity : AppCompatActivity() {
         StyleProfileStore.setUserLearnedStyleEnabled(this, switchLearnedUserStyle.isChecked)
         StyleProfileStore.saveUserLearnedStyleOverride(this, editLearnedUserStyle.text?.toString().orEmpty())
         updateModelStatus()
-        updateProviderSummary()
         Toast.makeText(this, "응답 설정을 저장했습니다.", Toast.LENGTH_SHORT).show()
         finish()
     }

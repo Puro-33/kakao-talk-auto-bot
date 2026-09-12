@@ -1,6 +1,7 @@
 package com.example.kakaotalkautobot
 
 import android.content.Context
+import androidx.core.content.edit
 import org.json.JSONObject
 
 object ReplyStatsStore {
@@ -128,7 +129,7 @@ object ReplyStatsStore {
                 root.put("lastSkipAtMillis", System.currentTimeMillis())
             }
         }
-        prefs.edit().putString(KEY_COUNTS, root.toString()).apply()
+        prefs.edit { putString(KEY_COUNTS, root.toString()) }
     }
 
     fun snapshot(context: Context): Snapshot {
@@ -149,10 +150,9 @@ object ReplyStatsStore {
     }
 
     fun clear(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .remove(KEY_COUNTS)
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            remove(KEY_COUNTS)
+        }
     }
 
     private fun readCounts(context: Context): JSONObject {

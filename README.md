@@ -90,7 +90,7 @@
 - NDK 27 이상 필요 (앱 내 네이티브 컴포넌트 빌드용)
 - CMake 3.22 이상 필요
 - LiteRT-LM Android SDK를 사용합니다
-- 로컬 Hugging Face 토큰이 필요하면 프로젝트 루트 `.env` 에 `HF_TOKEN=...` 형식으로 넣습니다 (`.env` 는 gitignore 처리됨)
+- 기본 모델은 공개 URL에서 다운로드합니다. `.env`와 환경 변수의 `HF_TOKEN`을 앱에 포함하거나 다운로드 인증에 사용하지 않습니다.
 
 ## CI / 릴리즈
 

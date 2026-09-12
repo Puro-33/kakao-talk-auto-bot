@@ -1,6 +1,7 @@
 package com.example.kakaotalkautobot
 
 import android.content.Context
+import androidx.core.content.edit
 import org.json.JSONObject
 
 object StyleProfileStore {
@@ -143,28 +144,26 @@ object StyleProfileStore {
     }
 
     fun setUserLearnedStyleEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_USER_LEARNED_ENABLED, enabled)
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            putBoolean(KEY_USER_LEARNED_ENABLED, enabled)
+        }
     }
 
     fun saveUserLearnedStyleOverride(context: Context, style: String) {
         val cleaned = style.trim()
-        val edit = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-        if (cleaned.isBlank()) {
-            edit.remove(KEY_USER_LEARNED_OVERRIDE)
-        } else {
-            edit.putString(KEY_USER_LEARNED_OVERRIDE, cleaned)
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            if (cleaned.isBlank()) {
+                remove(KEY_USER_LEARNED_OVERRIDE)
+            } else {
+                putString(KEY_USER_LEARNED_OVERRIDE, cleaned)
+            }
         }
-        edit.apply()
     }
 
     fun resetUserLearnedStyle(context: Context) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .remove(KEY_USER_LEARNED_OVERRIDE)
-            .apply()
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            remove(KEY_USER_LEARNED_OVERRIDE)
+        }
     }
 
     fun getRoomLearnedStyleState(
@@ -494,7 +493,7 @@ object StyleProfileStore {
         val profile = root.optJSONObject(normalizedRoom) ?: JSONObject()
         block(profile)
         root.put(normalizedRoom, profile)
-        prefs.edit().putString(KEY_ROOM_PROFILES, root.toString()).apply()
+        prefs.edit { putString(KEY_ROOM_PROFILES, root.toString()) }
     }
 
     private fun readRoomProfiles(context: Context): JSONObject {

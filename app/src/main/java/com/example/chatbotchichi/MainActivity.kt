@@ -10,13 +10,13 @@ import android.content.IntentFilter
 import android.os.Bundle
 import android.provider.Settings
 import android.service.notification.NotificationListenerService
-import android.text.method.ScrollingMovementMethod
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.core.widget.NestedScrollView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var roomHistorySummaryText: TextView
     private lateinit var roomEmptyText: TextView
     private lateinit var logText: TextView
+    private lateinit var logScroll: NestedScrollView
     private lateinit var clearLogsButton: MaterialButton
     private lateinit var copyLogsButton: MaterialButton
     private lateinit var recyclerView: RecyclerView
@@ -83,6 +84,7 @@ class MainActivity : AppCompatActivity() {
         roomHistorySummaryText = findViewById(R.id.text_room_history_summary)
         roomEmptyText = findViewById(R.id.text_room_empty)
         logText = findViewById(R.id.log_text)
+        logScroll = findViewById(R.id.log_scroll)
         clearLogsButton = findViewById(R.id.btn_clear_logs)
         copyLogsButton = findViewById(R.id.btn_copy_logs)
         recyclerView = findViewById(R.id.recycler_rooms)
@@ -96,12 +98,6 @@ class MainActivity : AppCompatActivity() {
         }
         manageRoomsButton = findViewById(R.id.btn_manage_rooms)
 
-        logText.movementMethod = ScrollingMovementMethod.getInstance()
-        logText.setOnTouchListener { v, _ ->
-            v.parent?.requestDisallowInterceptTouchEvent(true)
-            false
-        }
-
         clearLogsButton.setOnClickListener { confirmClearLogs() }
         copyLogsButton.setOnClickListener { copyAllLogsToClipboard() }
         redactLogsSwitch.isChecked = AppSettings.shouldRedactLogCopies(this)
@@ -112,7 +108,8 @@ class MainActivity : AppCompatActivity() {
         recyclerView.layoutManager = LinearLayoutManager(this)
         roomAdapter = RoomTargetAdapter(
             roomTargets,
-            secondaryActionLabel = "메모",
+            context = this,
+            secondaryActionLabel = getString(R.string.action_memo),
             onRoomClick = { room -> openRoomMemory(room.name) },
             onSecondaryActionClick = { room -> openRoomMemory(room.name) },
             onDeleteClick = { room ->
@@ -242,7 +239,7 @@ class MainActivity : AppCompatActivity() {
     private fun updateDeviceNameUi() {
         val aiConfig = AppSettings.getAiConfig(this)
         val displayName = aiConfig.displayName.trim().ifBlank { "미설정" }
-        deviceNameText.text = "내 이름: $displayName · 로컬 AI 답장"
+        deviceNameText.text = getString(R.string.device_name_summary, displayName)
     }
 
     private fun applyStatusUi(status: String, state: StatusState) {
@@ -259,7 +256,7 @@ class MainActivity : AppCompatActivity() {
         logLines.clear()
         val history = LogStore.getAll(this)
         if (history.isBlank()) {
-            logText.text = "아직 수집된 로그가 없습니다."
+            logText.setText(R.string.logs_empty)
             return
         }
         history.split("\n")
@@ -286,7 +283,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderLogPreview() {
         if (logLines.isEmpty()) {
-            logText.text = "아직 수집된 로그가 없습니다."
+            logText.setText(R.string.logs_empty)
             return
         }
         logText.text = logLines.takeLast(12).joinToString("\n")
@@ -294,14 +291,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun scrollLogToBottom() {
-        logText.post {
-            val layout = logText.layout ?: return@post
-            val scrollAmount = layout.getLineTop(logText.lineCount) - logText.height
-            if (scrollAmount > 0) {
-                logText.scrollTo(0, scrollAmount)
-            } else {
-                logText.scrollTo(0, 0)
-            }
+        logScroll.post {
+            logScroll.fullScroll(View.FOCUS_DOWN)
         }
     }
 
@@ -348,9 +339,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateConfigSummary() {
         val config = AppSettings.getAiConfig(this)
-        identitySummaryText.text = "이름: ${config.displayName} · 페르소나: ${config.persona.take(40)}"
-        providerSummaryText.text = "응답 엔진: ${config.provider}"
-        behaviorSummaryText.text = "답장 방식: ${config.replyMode} · 트리거: ${config.triggerMode}"
+        identitySummaryText.text = getString(R.string.identity_summary, config.displayName, config.persona.take(40))
+        providerSummaryText.text = getString(R.string.response_engine_summary, config.provider)
+        behaviorSummaryText.text = getString(R.string.behavior_summary, config.replyMode, config.triggerMode)
     }
 
     private fun loadRoomTargets() {
@@ -375,24 +366,24 @@ class MainActivity : AppCompatActivity() {
     private fun updateRoomSummary() {
         val allRooms = BotManager.getBots(this).filterNot { it.name == "기본 자동응답" }
         val enabledCount = allRooms.count { it.isEnabled }
-        roomSummaryText.text = "응답 대상 ${enabledCount}개 · 전체 저장 ${allRooms.size}개"
+        roomSummaryText.text = getString(R.string.room_count_summary, enabledCount, allRooms.size)
 
         roomHistorySummaryText.text = if (AppSettings.isAllRoomsEnabled(this)) {
-            "모든 채팅방에서 AI 답장이 활성화되어 있습니다."
+            getString(R.string.all_rooms_reply_active)
         } else {
-            "특정 방만 선택한 경우에만 답장합니다."
+            getString(R.string.selected_rooms_reply_active)
         }
     }
 
     private fun updateSessionSummary() {
         val knownRooms = SessionManager.getRegisteredRooms(this)
         val configuredRooms = BotManager.getBots(this).count { it.name != "기본 자동응답" }
-        sessionSummaryText.text = "대상 방 ${configuredRooms}개 · 최근 감지 방 ${knownRooms.size}개"
+        sessionSummaryText.text = getString(R.string.session_count_summary, configuredRooms, knownRooms.size)
     }
 
     private fun updateReplyStatsSummary() {
         val snapshot = ReplyStatsStore.snapshot(this)
-        replyStatsSummaryText.text = "${snapshot.summary()}\n${snapshot.detailSummary()}"
+        replyStatsSummaryText.text = getString(R.string.reply_statistics_summary, snapshot.summary(), snapshot.detailSummary())
     }
 
     private fun syncReplySwitch(enabled: Boolean) {

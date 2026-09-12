@@ -1,31 +1,13 @@
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
 }
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
-fun loadDotEnv(rootDir: java.io.File): Map<String, String> {
-    val envFile = rootDir.resolve(".env")
-    if (!envFile.exists()) return emptyMap()
-
-    return envFile.readLines()
-        .map { it.trim() }
-        .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
-        .associate { line ->
-            val idx = line.indexOf('=')
-            val key = line.substring(0, idx).trim()
-            val value = line.substring(idx + 1).trim().removeSurrounding("\"")
-            key to value
-        }
-}
 
 val releaseStoreFilePath = System.getenv("ANDROID_RELEASE_STORE_FILE")?.takeIf { it.isNotBlank() }
 val releaseStorePassword = System.getenv("ANDROID_RELEASE_STORE_PASSWORD")?.takeIf { it.isNotBlank() }
 val releaseKeyAlias = System.getenv("ANDROID_RELEASE_KEY_ALIAS")?.takeIf { it.isNotBlank() }
 val releaseKeyPassword = System.getenv("ANDROID_RELEASE_KEY_PASSWORD")?.takeIf { it.isNotBlank() }
-val dotEnv = loadDotEnv(rootDir)
-val huggingFaceToken = dotEnv["HF_TOKEN"]?.takeIf { it.isNotBlank() }
 val hasReleaseSigning = listOf(
     releaseStoreFilePath,
     releaseStorePassword,
@@ -36,22 +18,17 @@ val hasReleaseSigning = listOf(
 android {
     namespace = "com.example.kakaotalkautobot"
     compileSdk {
-        version = release(36)
-    }
-
-    buildFeatures {
-        buildConfig = true
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "com.example.kakaotalkautobot"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "HF_TOKEN", "\"${huggingFaceToken.orEmpty()}\"")
     }
 
     signingConfigs {
@@ -81,11 +58,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
-        }
-    }
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
@@ -97,17 +69,27 @@ android {
         }
     }
     ndkVersion = "27.0.12077973"
+    lint {
+        warningsAsErrors = true
+        xmlReport = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
 }
 
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
-    implementation("androidx.wear:wear:1.2.0")
-    implementation("com.google.ai.edge.litertlm:litertlm-android:0.10.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
-    implementation("org.json:json:20231013")
+    implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.wear)
+    implementation(libs.litertlm)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.json)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

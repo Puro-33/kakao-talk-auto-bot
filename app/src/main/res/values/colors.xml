@@ -15,7 +15,4 @@
     <color name="colorWarning">#FFB26A00</color>
     <color name="colorDanger">#FFD14343</color>
     <color name="colorInfo">#FF3B82F6</color>
-    <color name="colorLogBackground">#FF111827</color>
-    <color name="colorLogText">#FFB6E6CC</color>
-    <color name="white">#FFFFFFFF</color>
 </resources>

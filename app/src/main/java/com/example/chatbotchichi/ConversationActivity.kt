@@ -79,7 +79,8 @@ class ConversationActivity : AppCompatActivity() {
         summaries.map { it to ConversationStore.profilePreview(applicationContext, it.id) }
     }) { rows ->
         roomList.removeAllViews()
-        status.text = if (rows.isEmpty()) "아직 수집한 방이 없습니다." else "${rows.size}개 방 · 최근 90일"
+        status.text = if (rows.isEmpty()) getString(R.string.conversation_rooms_empty)
+            else getString(R.string.conversation_room_count, rows.size)
         rows.forEach { (room, preview) -> renderRoom(room, preview) }
     }
 
@@ -92,7 +93,7 @@ class ConversationActivity : AppCompatActivity() {
         panel.addView(label("저장 ${room.messageCount}개 · 본인: ${room.selfName ?: "미선택"}\n" +
             if (room.notificationKey == null) "알림 방 연결 안 됨" else "알림 방 연결됨"))
         val capture = SwitchMaterial(this).apply {
-            text = "이 방의 알림 수집"
+            setText(R.string.conversation_capture_notifications)
             minHeight = dp(48)
             isChecked = room.captureEnabled
             isEnabled = room.notificationKey != null
@@ -104,7 +105,7 @@ class ConversationActivity : AppCompatActivity() {
                         setOnCheckedChangeListener(null)
                         isChecked = room.captureEnabled
                         isEnabled = false
-                        status.text = "수집 설정을 저장하지 못했습니다. 방 목록을 새로고침한 뒤 다시 시도하세요."
+                        status.setText(R.string.conversation_capture_save_failed)
                     }
                 }
             }
@@ -128,7 +129,7 @@ class ConversationActivity : AppCompatActivity() {
         ImportPreview(raw, parsed.title, participants, parsed.messages.size, parsed.warnings,
             ConversationStore.listRooms(applicationContext))
     }) { preview ->
-        status.text = "메시지 ${preview.messageCount}개 확인 · 저장 전 본인과 대상 방을 선택하세요."
+        status.text = getString(R.string.conversation_import_preview, preview.messageCount)
         AlertDialog.Builder(this)
             .setTitle("대화에서 본인을 선택하세요")
             .setItems(preview.participants.toTypedArray()) { _, index ->
@@ -267,7 +268,7 @@ class ConversationActivity : AppCompatActivity() {
                 setControlsEnabled(content, true)
                 // Do not copy database/IO exception messages that could expose message contents.
                 status.text = if (error is ExportReadException) error.message else
-                    "처리하지 못했습니다. UTF-8 텍스트 파일, 파일 크기와 저장 공간을 확인한 뒤 다시 시도하세요."
+                    getString(R.string.conversation_processing_failed)
             }
         }
     }

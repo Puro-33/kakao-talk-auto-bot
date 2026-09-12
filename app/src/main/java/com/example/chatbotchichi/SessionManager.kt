@@ -2,6 +2,7 @@ package com.example.kakaotalkautobot
 
 import android.app.Notification
 import android.content.Context
+import androidx.core.content.edit
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import org.json.JSONObject
@@ -128,7 +129,7 @@ object SessionManager {
                 json.put(room, time)
             }
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            prefs.edit().putString(KEY_ROOM_TIMES, json.toString()).apply()
+            prefs.edit { putString(KEY_ROOM_TIMES, json.toString()) }
         } catch (e: Exception) {
             Log.e(TAG, "세션 목록 저장 실패", e)
         }

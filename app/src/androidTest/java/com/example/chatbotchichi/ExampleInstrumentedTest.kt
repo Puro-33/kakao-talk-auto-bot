@@ -201,7 +201,7 @@ class ExampleInstrumentedTest {
     }
 
     @Test
-    fun testLocalLlmQuestionPromptDoesNotCollapseToEmptyReply() {
+    fun testModelIdentityUsesConfiguredMetadata() {
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
         val config = AutoReplyJson.defaultConfig("김민재").copy(
             persona = "너는 카카오톡 자동응답 도우미다. 짧고 자연스럽게 답하고, 질문에는 바로 핵심만 답해.",
@@ -212,8 +212,6 @@ class ExampleInstrumentedTest {
             RoomHistoryMessage("나", "하이! 😊", false, 2L),
             RoomHistoryMessage("김민재", "너 모델이 뭐야?", true, 3L)
         )
-
-        ensureDefaultModelReady(appContext)
 
         val startedAt = System.currentTimeMillis()
         val result = AiProviderClient.generate(
@@ -231,10 +229,25 @@ class ExampleInstrumentedTest {
         Log.i(tag, "LLM_QUESTION_FAILURE=${result.failureReason}")
         Log.i(tag, "LLM_QUESTION_ELAPSED_MS=$elapsedMs")
 
-        assertTrue(
-            "Question prompt should not collapse into an empty AI response",
-            result.reply?.isNotBlank() == true
+        assertEquals(
+            "이 앱의 기본 답장 모델은 ${LlmModelManager.DEFAULT_MODEL.name} 입니다.",
+            result.reply
         )
+    }
+
+    @Test
+    fun testDefaultModelGeneratesKoreanOnDevice() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        ensureDefaultModelReady(context)
+        LlmEngine.free()
+        try {
+            assertTrue("Default model should load: ${LlmEngine.getLastError()}", LlmEngine.loadModel(context))
+            val reply = LlmEngine.generate("한 문장으로 짧게 한국어 인사를 해 줘.", maxTokens = 32)
+            Log.i(tag, "DEFAULT_MODEL_REPLY=$reply")
+            assertTrue("Native generation should return Korean text", reply.any { it in '\uAC00'..'\uD7A3' })
+        } finally {
+            LlmEngine.free()
+        }
     }
 
     @Test

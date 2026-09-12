@@ -103,10 +103,6 @@ object LlmModelManager {
             val connection = url.openConnection()
             connection.connectTimeout = 15_000
             connection.readTimeout = 60_000
-            val hfToken = BuildConfig.HF_TOKEN.trim()
-            if (hfToken.isNotEmpty()) {
-                connection.setRequestProperty("Authorization", "Bearer $hfToken")
-            }
             connection.connect()
 
             val totalBytes = connection.contentLengthLong

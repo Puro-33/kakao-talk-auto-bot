@@ -19,3 +19,9 @@ appId: com.example.kakaotalkautobot
       text: "최근 로그"
     direction: DOWN
 - assertVisible: "최근 로그"
+- scrollUntilVisible:
+    element:
+      id: "log_scroll"
+    direction: DOWN
+- assertVisible:
+    id: "log_text"

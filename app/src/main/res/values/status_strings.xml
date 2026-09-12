@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="device_name_summary">내 이름: %1$s · 로컬 AI 답장</string>
+    <string name="all_rooms_reply_active">모든 채팅방에서 AI 답장이 활성화되어 있습니다.</string>
+    <string name="selected_rooms_reply_active">특정 방만 선택한 경우에만 답장합니다.</string>
+    <string name="room_configuration_guidance">직접 입력한 메모와 말투는 이 방 이름의 응답 설정에 적용됩니다. 자동 분석은 대화 수집·말투 분석에서 확인하세요.</string>
+    <string name="conversation_capture_notifications">이 방의 알림 수집</string>
+    <string name="conversation_capture_save_failed">수집 설정을 저장하지 못했습니다. 방 목록을 새로고침한 뒤 다시 시도하세요.</string>
+    <string name="conversation_processing_failed">처리하지 못했습니다. UTF-8 텍스트 파일, 파일 크기와 저장 공간을 확인한 뒤 다시 시도하세요.</string>
+    <string name="identity_summary">이름: %1$s · 페르소나: %2$s</string>
+    <string name="response_engine_summary">응답 엔진: %1$s</string>
+    <string name="behavior_summary">답장 방식: %1$s · 트리거: %2$s</string>
+    <string name="room_count_summary">응답 대상 %1$d개 · 전체 저장 %2$d개</string>
+    <string name="session_count_summary">대상 방 %1$d개 · 최근 감지 방 %2$d개</string>
+    <string name="reply_statistics_summary">%1$s\n%2$s</string>
+    <string name="conversation_rooms_empty">아직 수집한 방이 없습니다.</string>
+    <string name="conversation_room_count">%1$d개 방 · 최근 90일</string>
+    <string name="conversation_import_preview">메시지 %1$d개 확인 · 저장 전 본인과 대상 방을 선택하세요.</string>
+    <string name="room_style_preview_guidance">자동 말투 미리보기와 원본 삭제는 대화 수집·말투 분석에서 실제 방을 선택하세요. 같은 이름의 방을 자동으로 연결하지 않습니다.</string>
+    <string name="room_style_preview_with_override">%1$s\n수동 수정값: %2$s</string>
+    <string name="model_runtime_unsupported">⚠️ 에뮬레이터에서는 Gemma/LiteRT-LM 실행이 지원되지 않습니다. ARM64 실기기에서 사용해 주세요.</string>
+    <string name="model_download_device_only">실기기에서 다운로드 가능</string>
+    <string name="model_checksum_verified">해시 검증됨</string>
+    <string name="model_checksum_pending">해시 검증 대기</string>
+    <string name="model_ready">✅ Gemma 4 준비됨 (%1$dMB · %2$s)</string>
+    <string name="model_download_again">모델 재다운로드</string>
+    <string name="model_validation_failed">⚠️ 모델 검증 실패 (%1$dMB) · %2$s · 기본 모델 다운로드 필요</string>
+    <string name="model_download_default">Gemma 4 다운로드 (~2.58GB)</string>
+    <string name="model_required">⚠️ Gemma 4 모델이 필요합니다</string>
+    <string name="model_download_progress">다운로드 중... %1$d%%</string>
+</resources>

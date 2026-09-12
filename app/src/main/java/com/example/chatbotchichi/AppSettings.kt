@@ -1,6 +1,7 @@
 package com.example.kakaotalkautobot
 
 import android.content.Context
+import androidx.core.content.edit
 import androidx.appcompat.app.AppCompatDelegate
 import org.json.JSONArray
 import org.json.JSONObject
@@ -64,7 +65,7 @@ object AppSettings {
 
     fun setAiReplyEnabled(context: Context, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_AI_REPLY_ENABLED, enabled).apply()
+        prefs.edit { putBoolean(KEY_AI_REPLY_ENABLED, enabled) }
     }
 
     fun isGlobalEnabled(context: Context): Boolean = isAiReplyEnabled(context)
@@ -80,7 +81,7 @@ object AppSettings {
 
     fun setAllRoomsEnabled(context: Context, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_ALL_ROOMS_ENABLED, enabled).apply()
+        prefs.edit { putBoolean(KEY_ALL_ROOMS_ENABLED, enabled) }
     }
 
     fun shouldRedactLogCopies(context: Context): Boolean {
@@ -90,7 +91,7 @@ object AppSettings {
 
     fun setRedactLogCopies(context: Context, enabled: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putBoolean(KEY_REDACT_LOG_COPIES, enabled).apply()
+        prefs.edit { putBoolean(KEY_REDACT_LOG_COPIES, enabled) }
     }
 
     fun getThemeMode(context: Context): ThemeMode {
@@ -100,7 +101,7 @@ object AppSettings {
 
     fun setThemeMode(context: Context, mode: ThemeMode) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit().putString(KEY_THEME_MODE, mode.preferenceValue).apply()
+        prefs.edit { putString(KEY_THEME_MODE, mode.preferenceValue) }
         AppCompatDelegate.setDefaultNightMode(mode.appCompatMode)
     }
 
@@ -137,17 +138,17 @@ object AppSettings {
 
     fun saveAiConfig(context: Context, config: AiConfig) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString(KEY_DISPLAY_NAME, config.displayName)
-            .putString(KEY_PERSONA, config.persona)
-            .putString(KEY_PERSONA_EXAMPLES, config.personaExamples)
-            .putString(KEY_PROVIDER, LOCAL_PROVIDER_TYPE)
-            .putString(KEY_PROVIDER_MODEL, LOCAL_PROVIDER_MODEL)
-            .putString(KEY_API_KEY_MODE, "불필요")
-            .putString(KEY_API_KEY, "")
-            .putString(KEY_REPLY_MODE, config.replyMode)
-            .putString(KEY_TRIGGER_MODE, config.triggerMode)
-            .apply()
+        prefs.edit {
+            putString(KEY_DISPLAY_NAME, config.displayName)
+            putString(KEY_PERSONA, config.persona)
+            putString(KEY_PERSONA_EXAMPLES, config.personaExamples)
+            putString(KEY_PROVIDER, LOCAL_PROVIDER_TYPE)
+            putString(KEY_PROVIDER_MODEL, LOCAL_PROVIDER_MODEL)
+            putString(KEY_API_KEY_MODE, "불필요")
+            putString(KEY_API_KEY, "")
+            putString(KEY_REPLY_MODE, config.replyMode)
+            putString(KEY_TRIGGER_MODE, config.triggerMode)
+        }
     }
 
     internal fun normalizeProviderType(providerType: String?): String {
@@ -262,7 +263,7 @@ object AppSettings {
         }
 
         json.put(normalized, memory.trim())
-        prefs.edit().putString(KEY_ROOM_MEMORIES, json.toString()).apply()
+        prefs.edit { putString(KEY_ROOM_MEMORIES, json.toString()) }
     }
 
     fun importRoomHistory(
@@ -310,7 +311,7 @@ object AppSettings {
             item.put("lastImportSource", room.lastImportSource ?: "")
             array.put(item)
         }
-        prefs.edit().putString(KEY_ROOM_TARGETS, array.toString()).apply()
+        prefs.edit { putString(KEY_ROOM_TARGETS, array.toString()) }
     }
 
     private fun removeRoomMemory(context: Context, roomName: String) {
@@ -321,7 +322,7 @@ object AppSettings {
             JSONObject()
         }
         json.remove(roomName)
-        prefs.edit().putString(KEY_ROOM_MEMORIES, json.toString()).apply()
+        prefs.edit { putString(KEY_ROOM_MEMORIES, json.toString()) }
     }
 
     private fun upsertImportMetadata(context: Context, roomName: String, sourceLabel: String) {

@@ -65,6 +65,10 @@ object AiProviderClient {
             return GenerationResult(skippedReason = "의미 없는 짧은 메시지입니다.")
         }
 
+        ModelIdentity.replyIfAsked(normalizedMessage, LlmModelManager.DEFAULT_MODEL.name)?.let {
+            return GenerationResult(reply = it)
+        }
+
         val deterministicCandidates = buildDeterministicCandidates(config, normalizedMessage, history)
         val groundedDeterministic = ReplyQualityEvaluator.selectBest(deterministicCandidates)
             ?.takeIf { candidate ->
@@ -171,6 +175,7 @@ object AiProviderClient {
     ): String {
         return buildString {
             append("너는 카카오톡 자동 응답 도우미다. 아래 규칙을 따른다:\n")
+            append(ModelIdentity.promptRule(LlmModelManager.DEFAULT_MODEL.name))
             append("1. 짧고 자연스럽게 카톡 답장처럼 답변해라 (한두 문장)\n")
             append("2. 최근 대화나 방 메모에 답이 있으면 그 사실을 그대로 짧게 답해라.\n")
             append("3. 모르는 것은 모른다고 말해라. 추측하지 마라.\n")
@@ -229,6 +234,7 @@ object AiProviderClient {
     ): String {
         return buildString {
             append("짧고 자연스럽게 한국어 카톡 답장만 출력해라. 답을 모르면 짧게 모른다고 말해라. 최근 대화와 메모에 근거가 있으면 그걸 우선 써라.\n")
+            append(ModelIdentity.promptRule(LlmModelManager.DEFAULT_MODEL.name))
             append("'필요하면 알려줘', '언제든 말해', '파이팅' 같은 도우미식 꼬리는 붙이지 마라.\n")
             append("사용자 직접 예시와 수동 방 말투가 있으면 학습된 말투보다 우선한다.\n")
             if (styleGuide.isNotBlank()) {
@@ -268,6 +274,7 @@ object AiProviderClient {
     ): String {
         return buildString {
             append("아래 대화에서 '나'가 실제로 보낼 법한 카카오톡 답장만 써라.\n")
+            append(ModelIdentity.promptRule(LlmModelManager.DEFAULT_MODEL.name))
             append("사용자 직접 예시와 수동 방 말투가 있으면 그것을 최우선으로 흉내내라.\n")
             append("모르는 사실은 지어내지 말고 짧게 모른다고 하거나 확인 질문을 해라.\n")
             append("챗봇처럼 설명하지 말고 한 문장으로 끝내라.\n")
@@ -310,6 +317,7 @@ object AiProviderClient {
     ): String {
         return buildString {
             append("너는 자동응답기가 아니라 이 방의 실제 사용자처럼 답장한다.\n")
+            append(ModelIdentity.promptRule(LlmModelManager.DEFAULT_MODEL.name))
             append("사용자 직접 예시가 있으면 단어 선택, 길이, 반말/존댓말, 느낌을 최우선으로 맞춘다.\n")
             append("수동 방 말투가 있으면 학습된 말투보다 우선한다.\n")
             append("방 메모나 최근 대화에 없는 사실은 만들지 말고, 모르면 짧게 모른다고 답한다.\n")
@@ -354,6 +362,7 @@ object AiProviderClient {
     ): String {
         return buildString {
             append("한국어로 짧게 한 문장만 답해라. 설명하지 마라. 추측하지 말고 페르소나와 최근 맥락을 최대한 유지해라.\n")
+            append(ModelIdentity.promptRule(LlmModelManager.DEFAULT_MODEL.name))
             append("'필요하면 알려줘', '언제든 말해', '파이팅' 같은 도우미식 꼬리는 붙이지 마라.\n")
             append("사용자 직접 예시와 수동 방 말투가 있으면 학습된 말투보다 우선한다.\n")
             if (styleGuide.isNotBlank()) {

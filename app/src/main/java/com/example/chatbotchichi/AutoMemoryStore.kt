@@ -1,6 +1,7 @@
 package com.example.kakaotalkautobot
 
 import android.content.Context
+import androidx.core.content.edit
 import org.json.JSONObject
 import java.util.Locale
 
@@ -32,7 +33,7 @@ object AutoMemoryStore {
                     .put("updatedAt", System.currentTimeMillis())
             )
         }
-        prefs.edit().putString(KEY_MEMORIES, root.toString()).apply()
+        prefs.edit { putString(KEY_MEMORIES, root.toString()) }
     }
 
     fun getSummary(context: Context, room: String): String {
@@ -49,7 +50,7 @@ object AutoMemoryStore {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val root = parseRoot(prefs)
         root.remove(normalizedRoom)
-        prefs.edit().putString(KEY_MEMORIES, root.toString()).apply()
+        prefs.edit { putString(KEY_MEMORIES, root.toString()) }
     }
 
     fun getPersonaHint(context: Context, room: String, displayName: String): String? {

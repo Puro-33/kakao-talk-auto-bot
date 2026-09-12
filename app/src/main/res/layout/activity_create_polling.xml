@@ -5,7 +5,6 @@
     android:id="@+id/create_polling_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackground"
     android:fillViewport="true"
     android:padding="@dimen/space_5">
 
@@ -17,7 +16,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="대상 방 관리"
+            android:text="@string/room_management_title"
             android:textColor="@color/colorTextPrimary"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -27,7 +26,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_1"
             android:layout_marginBottom="@dimen/space_5"
-            android:text="답장을 보낼 방을 추가하고 메모를 편집합니다."
+            android:text="@string/room_management_description"
             android:textColor="@color/colorTextSecondary"
             android:textSize="13sp" />
 
@@ -57,7 +56,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="모든 방에서 답장"
+                        android:text="@string/reply_all_rooms"
                         android:textColor="@color/colorTextPrimary"
                         android:textSize="18sp"
                         android:textStyle="bold" />
@@ -72,7 +71,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="켜면 특정 방을 지정하지 않아도 모든 채팅방에서 AI가 답장합니다."
+                    android:text="@string/reply_all_rooms_description"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -97,7 +96,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="새 대상 방 추가"
+                    android:text="@string/add_target_room_title"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -114,7 +113,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:hint="방 이름">
+                        android:hint="@string/room_name_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/input_room_name"
@@ -130,7 +129,7 @@
                         android:layout_height="@dimen/touch_target"
                         android:layout_marginStart="@dimen/space_3"
                         android:backgroundTint="@color/colorPrimary"
-                        android:text="추가"
+                        android:text="@string/action_add"
                         android:textColor="@color/colorOnPrimary" />
                 </LinearLayout>
 
@@ -139,7 +138,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="각 방에서 메모를 수정하여 AI가 맥락을 이해하도록 도울 수 있습니다."
+                    android:text="@string/room_memory_help"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -163,7 +162,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="대상 방 목록"
+                    android:text="@string/target_room_list_title"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="18sp"
                     android:textStyle="bold" />
@@ -182,7 +181,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:text="대상 방이 없습니다. 위에서 방 이름을 추가하세요."
+                    android:text="@string/target_room_list_empty"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp"
                     android:visibility="gone" />

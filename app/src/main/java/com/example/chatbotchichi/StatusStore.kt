@@ -1,6 +1,7 @@
 package com.example.kakaotalkautobot
 
 import android.content.Context
+import androidx.core.content.edit
 
 object StatusStore {
     private const val PREFS_NAME = "ListenerStatusPrefs"
@@ -16,11 +17,11 @@ object StatusStore {
 
     fun save(context: Context, text: String, isConnected: Boolean) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        prefs.edit()
-            .putString(KEY_TEXT, text)
-            .putBoolean(KEY_CONNECTED, isConnected)
-            .putLong(KEY_TS, System.currentTimeMillis())
-            .apply()
+        prefs.edit {
+            putString(KEY_TEXT, text)
+            putBoolean(KEY_CONNECTED, isConnected)
+            putLong(KEY_TS, System.currentTimeMillis())
+        }
     }
 
     fun get(context: Context): Status? {

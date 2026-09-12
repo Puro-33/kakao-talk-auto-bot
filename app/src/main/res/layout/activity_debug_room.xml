@@ -4,7 +4,6 @@
     android:id="@+id/debug_room_scroll"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorBackground"
     android:fillViewport="true"
     android:padding="@dimen/space_5">
 
@@ -16,7 +15,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="방 메모리 편집"
+            android:text="@string/room_memory_title"
             android:textColor="@color/colorTextPrimary"
             android:textSize="24sp"
             android:textStyle="bold" />
@@ -26,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/space_1"
             android:layout_marginBottom="@dimen/space_5"
-            android:text="AI가 답변할 때 참고할 방의 맥락을 적어주세요."
+            android:text="@string/room_memory_description"
             android:textColor="@color/colorTextSecondary"
             android:textSize="13sp" />
 
@@ -49,7 +48,7 @@
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="방 이름">
+                    android:hint="@string/room_name_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_room_name"
@@ -64,7 +63,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
-                    android:text="가져온 CSV 정보가 없습니다."
+                    android:text="@string/csv_info_empty"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -73,7 +72,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="방 메모리">
+                    android:hint="@string/room_memory_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_memory"
@@ -89,7 +88,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="수동 방 말투">
+                    android:hint="@string/manual_room_style_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_room_style"
@@ -106,7 +105,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
                     android:checked="true"
-                    android:text="학습된 방 말투 사용"
+                    android:text="@string/use_learned_room_style"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="14sp" />
 
@@ -115,7 +114,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_2"
-                    android:text="자동 추출된 방 말투가 아직 없습니다."
+                    android:text="@string/learned_room_style_empty"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -124,7 +123,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="학습된 방 말투 수정">
+                    android:hint="@string/edit_learned_room_style_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_learned_room_style"
@@ -148,7 +147,7 @@
                         android:layout_height="@dimen/touch_target"
                         android:layout_marginEnd="@dimen/space_2"
                         android:layout_weight="1"
-                        android:text="수정 초기화"
+                        android:text="@string/action_reset_edits"
                         android:textColor="@color/colorTextPrimary"
                         app:strokeColor="@color/colorBorder" />
 
@@ -158,7 +157,7 @@
                         android:layout_width="0dp"
                         android:layout_height="@dimen/touch_target"
                         android:layout_weight="1"
-                        android:text="학습 원본 삭제"
+                        android:text="@string/action_delete_learned_source"
                         android:textColor="@color/colorDanger"
                         app:strokeColor="@color/colorDanger" />
                 </LinearLayout>
@@ -167,7 +166,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
-                    android:text="답장 방식"
+                    android:text="@string/reply_mode_label"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -181,7 +180,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
-                    android:text="반응 조건"
+                    android:text="@string/trigger_mode_label"
                     android:textColor="@color/colorTextSecondary"
                     android:textSize="13sp" />
 
@@ -196,7 +195,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="호출어 또는 키워드 (선택)">
+                    android:hint="@string/trigger_keyword_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_trigger_value"
@@ -210,7 +209,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_4"
-                    android:hint="반응할 사람 이름 목록 (줄바꿈 또는 쉼표)">
+                    android:hint="@string/allowed_senders_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_allowed_senders"
@@ -226,7 +225,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="무시할 사람 이름 목록 (줄바꿈 또는 쉼표)">
+                    android:hint="@string/ignored_senders_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_blocked_senders"
@@ -242,7 +241,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="@dimen/space_3"
-                    android:hint="고정 답장 목록 (줄바꿈 또는 쉼표)">
+                    android:hint="@string/fixed_replies_hint">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/edit_canned_replies"
@@ -266,7 +265,7 @@
                         android:layout_height="@dimen/touch_target"
                         android:layout_marginEnd="@dimen/space_2"
                         android:layout_weight="1"
-                        android:text="비우기"
+                        android:text="@string/action_clear"
                         android:textColor="@color/colorTextPrimary"
                         app:strokeColor="@color/colorBorder" />
 
@@ -276,7 +275,7 @@
                         android:layout_height="@dimen/touch_target"
                         android:layout_weight="1"
                         android:backgroundTint="@color/colorPrimary"
-                        android:text="저장"
+                        android:text="@string/action_save"
                         android:textColor="@color/colorOnPrimary" />
                 </LinearLayout>
             </LinearLayout>

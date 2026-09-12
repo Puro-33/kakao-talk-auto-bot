@@ -160,7 +160,7 @@ set_java_home() {
 }
 
 find_compatible_java_home() {
-    for candidate_var in JAVA21_HOME JDK21_HOME JAVA17_HOME JDK17_HOME JAVA11_HOME JDK11_HOME
+    for candidate_var in JAVA21_HOME JDK21_HOME JAVA17_HOME JDK17_HOME
     do
         eval candidate_home=\${$candidate_var}
         if [ -n "$candidate_home" ] && [ -x "$candidate_home/bin/java" ]
@@ -172,7 +172,7 @@ find_compatible_java_home() {
 
     if "$darwin" && [ -x /usr/libexec/java_home ]
     then
-        for candidate_version in 21 17 11
+        for candidate_version in 21 17
         do
             candidate_home=$(/usr/libexec/java_home -v "$candidate_version" 2>/dev/null) || continue
             if [ -n "$candidate_home" ] && [ -x "$candidate_home/bin/java" ]
@@ -187,8 +187,7 @@ find_compatible_java_home() {
     then
         for candidate_home in \
             /usr/lib/jvm/*21* \
-            /usr/lib/jvm/*17* \
-            /usr/lib/jvm/*11*
+            /usr/lib/jvm/*17*
         do
             if [ -x "$candidate_home/bin/java" ]
             then
@@ -202,7 +201,7 @@ find_compatible_java_home() {
 }
 
 CURRENT_JAVA_MAJOR=$(java_major_version "$JAVACMD")
-if [ -n "$CURRENT_JAVA_MAJOR" ] && [ "$CURRENT_JAVA_MAJOR" -gt 23 ]
+if [ -n "$CURRENT_JAVA_MAJOR" ] && { [ "$CURRENT_JAVA_MAJOR" -gt 23 ] || [ "$CURRENT_JAVA_MAJOR" -lt 17 ]; }
 then
     COMPATIBLE_JAVA_HOME=$(find_compatible_java_home) || COMPATIBLE_JAVA_HOME=
     if [ -n "$COMPATIBLE_JAVA_HOME" ]
@@ -210,7 +209,7 @@ then
         warn "Detected Java $CURRENT_JAVA_MAJOR for Gradle bootstrap; switching to compatible JDK at $COMPATIBLE_JAVA_HOME"
         set_java_home "$COMPATIBLE_JAVA_HOME"
     else
-        die "ERROR: Detected Java $CURRENT_JAVA_MAJOR, which is not supported by this project's Gradle/Kotlin DSL bootstrap.
+        die "ERROR: Detected Java $CURRENT_JAVA_MAJOR, outside this project's selected Gradle bootstrap range (17-23).
 
 Install JDK 21 (preferred) or JDK 17 and point JAVA_HOME, JAVA21_HOME, or JDK21_HOME to it."
     fi
