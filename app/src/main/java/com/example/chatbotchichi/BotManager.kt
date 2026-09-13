@@ -88,7 +88,10 @@ object BotManager {
     fun addSelectedRoom(context: Context, room: ConversationSummary): AutoReplyConfig {
         require(room.id.isNotBlank()) { "A selected room must have a local conversation ID" }
         val configs = getConfigs(context)
-        configs.firstOrNull { it.conversationId == room.id }?.let { return it }
+        configs.firstOrNull { it.conversationId == room.id }?.let {
+            ConversationStore.setCaptureEnabled(context, room.id, it.captureEnabled)
+            return it
+        }
         val title = room.title.trim().ifBlank { "카카오톡 대화방" }
         var name = title
         var suffix = 2
