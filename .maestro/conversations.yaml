@@ -61,7 +61,8 @@ appId: com.example.kakaotalkautobot
 - tapOn:
     id: "btn_import_past_conversation"
 - pressKey: back
-- assertVisible: "과거 대화 파일 가져오기"
+- assertVisible:
+    id: "btn_import_past_conversation"
 - scrollUntilVisible:
     element:
       id: "conversation_status"
