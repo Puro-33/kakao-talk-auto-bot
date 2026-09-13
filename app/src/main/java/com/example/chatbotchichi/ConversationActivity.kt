@@ -106,20 +106,21 @@ class ConversationActivity : AppCompatActivity() {
     }
 
     private fun handleShareIntent(incoming: Intent?) {
-        if (incoming?.action !in setOf(Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE)) return
-        val stream = if (incoming.action == Intent.ACTION_SEND_MULTIPLE) {
-            incoming.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.firstOrNull()
+        val shareIntent = incoming ?: return
+        if (shareIntent.action !in setOf(Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE)) return
+        val stream = if (shareIntent.action == Intent.ACTION_SEND_MULTIPLE) {
+            shareIntent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.firstOrNull()
         } else {
-            incoming.getParcelableExtra(Intent.EXTRA_STREAM)
+            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM)
         }
-            ?: incoming.clipData?.getItemAt(0)?.uri
+            ?: shareIntent.clipData?.getItemAt(0)?.uri
         if (stream != null) {
             try { contentResolver.takePersistableUriPermission(stream, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
             inspectExport(stream)
             return
         }
-        (incoming.getCharSequenceExtra(Intent.EXTRA_TEXT)
-            ?: incoming.clipData?.getItemAt(0)?.text)?.toString()
+        (shareIntent.getCharSequenceExtra(Intent.EXTRA_TEXT)
+            ?: shareIntent.clipData?.getItemAt(0)?.text)?.toString()
             ?.takeIf { it.isNotBlank() }
             ?.let(::inspectRawExport)
     }
