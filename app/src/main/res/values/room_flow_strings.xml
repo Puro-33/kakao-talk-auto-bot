@@ -8,7 +8,7 @@
     <string name="select_capture_room">수집할 카카오톡 방 선택</string>
     <string name="conversation_collection_intro">카카오톡을 열어 수집할 방을 직접 선택하세요. 확인 후 같은 제목의 방에서 알림으로 받은 메시지를 저장합니다. 수집을 켜도 AI 자동답장은 켜지지 않습니다.</string>
     <string name="room_selected_title_binding">직접 선택한 방 제목으로 연결됨 · 동명 방 구분 불가</string>
-    <string name="conversation_history_optional">과거 대화와 직접 보낸 메시지의 말투 분석이 필요할 때만 아래 파일 가져오기를 사용하세요.</string>
+    <string name="conversation_history_optional">과거 대화와 직접 보낸 메시지의 말투 분석이 필요할 때 사용하세요. 공유한 내보내기 파일 한 세트는 방 하나로 가져옵니다.</string>
     <string name="import_past_conversation">과거 대화 파일 가져오기</string>
     <string name="capture_room_confirm_title">이 방의 대화 수집을 시작할까요?</string>
     <string name="capture_room_confirm_message">%1$s\n\n선택 이후 알림으로 받은 메시지만 이 기기에 저장합니다. 과거 대화와 직접 보낸 메시지는 자동으로 읽지 않습니다.</string>
@@ -16,6 +16,7 @@
     <string name="capture_cancel">취소</string>
     <string name="capture_saving">수집할 방을 저장하는 중…</string>
     <string name="conversation_export_from_kakao_hint">카카오톡에서 대화방을 열고 메뉴 → 대화 내보내기 → 공유에서 자동응답기를 선택하세요.</string>
+    <string name="conversation_import_one_file">대화방별로 내보내기 파일을 한 번에 하나씩 공유하세요.</string>
     <string name="kakao_not_installed">카카오톡을 찾을 수 없습니다.</string>
     <string name="open_notification_access_settings">알림 접근 설정 열기</string>
     <string name="notification_access_enabled_guidance">알림 접근이 켜져 있습니다. 새 메시지 수집과 알림 답장은 카카오톡 알림을 통해 동작합니다.</string>

@@ -56,6 +56,12 @@ appId: com.example.kakaotalkautobot
     id: "btn_select_capture_room"
 - scrollUntilVisible:
     element:
+      id: "conversation_history_guidance"
+    direction: DOWN
+- assertVisible:
+    id: "conversation_history_guidance"
+- scrollUntilVisible:
+    element:
       id: "btn_import_past_conversation"
     direction: DOWN
 - tapOn:

@@ -47,7 +47,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="text/plain" />
                 <data android:mimeType="application/octet-stream" />
-                <data android:mimeType="*/*" />
+                <data android:mimeType="message/*" />
             </intent-filter>
         </activity>
         <activity

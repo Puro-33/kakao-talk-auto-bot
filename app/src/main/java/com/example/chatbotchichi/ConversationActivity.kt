@@ -82,7 +82,9 @@ class ConversationActivity : AppCompatActivity() {
         content.addView(status)
         roomList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         content.addView(roomList)
-        content.addView(label(getString(R.string.conversation_history_optional)))
+        content.addView(label(getString(R.string.conversation_history_optional)).apply {
+            id = R.id.conversation_history_guidance
+        })
         content.addView(button(getString(R.string.import_past_conversation), outlined = true) {
             openKakaoForExport()
         }.apply { id = R.id.btn_import_past_conversation })
@@ -108,21 +110,39 @@ class ConversationActivity : AppCompatActivity() {
     private fun handleShareIntent(incoming: Intent?) {
         val shareIntent = incoming ?: return
         if (shareIntent.action !in setOf(Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE)) return
-        val stream = if (shareIntent.action == Intent.ACTION_SEND_MULTIPLE) {
-            shareIntent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.firstOrNull()
-        } else {
-            shareIntent.getParcelableExtra(Intent.EXTRA_STREAM)
-        }
-            ?: shareIntent.clipData?.getItemAt(0)?.uri
-        if (stream != null) {
-            try { contentResolver.takePersistableUriPermission(stream, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
+        val streams = buildList<Uri> {
+            if (shareIntent.action == Intent.ACTION_SEND_MULTIPLE) {
+                addAll(shareIntent.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM).orEmpty())
+            } else {
+                shareIntent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)?.let { add(it) }
+            }
+            shareIntent.clipData?.let { clip ->
+                for (index in 0 until clip.itemCount) clip.getItemAt(index).uri?.let { add(it) }
+            }
+        }.distinct()
+        if (streams.isNotEmpty()) {
+            if (streams.size != 1) {
+                status.setText(R.string.conversation_import_one_file)
+                return
+            }
+            val stream = streams.single()
+            try {
+                contentResolver.takePersistableUriPermission(stream, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (_: SecurityException) {
+                // Kakao grants temporary read access; its FileProvider does not offer persistable grants.
+            }
             inspectExport(stream)
             return
         }
-        (shareIntent.getCharSequenceExtra(Intent.EXTRA_TEXT)
-            ?: shareIntent.clipData?.getItemAt(0)?.text)?.toString()
-            ?.takeIf { it.isNotBlank() }
-            ?.let(::inspectRawExport)
+        val sharedText = (shareIntent.getCharSequenceExtra(Intent.EXTRA_TEXT)
+            ?: shareIntent.clipData?.getItemAt(0)?.text)?.toString()?.takeIf { it.isNotBlank() } ?: return
+        val textUri = sharedText.takeIf { it.startsWith("content://") && !it.contains('\n') }
+            ?.let { runCatching { Uri.parse(it) }.getOrNull() }
+        if (textUri != null) {
+            inspectExport(textUri)
+            return
+        }
+        inspectRawExport(sharedText)
     }
 
     override fun onResume() {
@@ -220,25 +240,40 @@ class ConversationActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("대화에서 본인을 선택하세요")
             .setItems(preview.participants.toTypedArray()) { _, index ->
-                chooseDestination(preview.raw, preview.title, preview.participants[index], preview.messageCount,
-                    preview.warnings, preview.destinations)
+                chooseDestination(
+                    preview.raw, preview.title, preview.participants, preview.participants[index],
+                    preview.messageCount, preview.warnings, preview.destinations
+                )
             }
             .setNegativeButton("취소", null)
             .show()
     }
 
     private fun chooseDestination(
-        raw: String, exportTitle: String?, selfName: String, messageCount: Int,
+        raw: String, exportTitle: String?, participants: List<String>, selfName: String, messageCount: Int,
         warnings: List<String>, destinations: List<ConversationSummary>
     ) {
-        // Existing identity must match; a display name alone never selects a destination.
-        val compatible = destinations.filter { it.selfName == null || it.selfName == selfName }
-        val labels = listOf("새 방으로 가져오기") + compatible.map(::roomLabel)
+        val trustedTitle = exportTitle?.trim()?.takeIf { it.isNotEmpty() }
+        val roomTitle = ConversationImportRouting.suggestedTitle(exportTitle, participants, selfName)
+        val matches = if (trustedTitle == null) emptyList()
+            else ConversationImportRouting.matchingRooms(trustedTitle, selfName, destinations)
+        if (trustedTitle != null && matches.size == 1) {
+            confirmImport(raw, roomTitle, selfName, messageCount, warnings, matches.single())
+            return
+        }
+        if (trustedTitle != null && matches.isEmpty()) {
+            confirmImport(raw, roomTitle, selfName, messageCount, warnings, null)
+            return
+        }
+        val compatible = if (matches.isNotEmpty()) matches
+            else ConversationImportRouting.compatibleRooms(selfName, destinations)
+        val newLabel = roomTitle?.let { "$it (새 방)" } ?: "새 방으로 가져오기"
+        val labels = listOf(newLabel) + compatible.map(::roomLabel)
         AlertDialog.Builder(this)
-            .setTitle("저장할 방을 직접 선택하세요")
+            .setTitle(if (matches.isNotEmpty()) "동명 방을 선택하세요" else "저장할 방을 직접 선택하세요")
             .setItems(labels.toTypedArray()) { _, index ->
                 val destination = if (index == 0) null else compatible[index - 1]
-                confirmImport(raw, exportTitle, selfName, messageCount, warnings, destination)
+                confirmImport(raw, roomTitle, selfName, messageCount, warnings, destination)
             }
             .setNegativeButton("취소", null)
             .show()

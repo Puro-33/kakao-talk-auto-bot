@@ -6,4 +6,5 @@
     <item name="conversation_notification_guidance" type="id" />
     <item name="btn_open_notification_access" type="id" />
     <item name="btn_import_past_conversation" type="id" />
+    <item name="conversation_history_guidance" type="id" />
 </resources>

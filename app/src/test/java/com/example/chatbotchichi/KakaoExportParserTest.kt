@@ -15,6 +15,52 @@ class KakaoExportParserTest {
         assertTrue(result.warnings.isEmpty())
     }
 
+    @Test fun parsesCurrentAndroidDotDateExportWithoutTreatingFilenameAsRoomTitle() {
+        val result = KakaoExportParser.parse(
+            "\uFEFFKakaoTalkChats.txt\n" +
+                "저장한 날짜 : 2026. 9. 12. 오후 1:00\n\n" +
+                "2026. 9. 11. 오후 2:30, 참여자A : 첫 메시지\n" +
+                "2026. 9. 11. 오후 2:31, 참여자B : 응답"
+        )
+        assertEquals(null, result.title)
+        assertEquals(listOf("참여자A", "참여자B"), result.participants)
+        assertEquals(2, result.messages.size)
+        assertEquals(1789104600000L, result.messages.first().timestamp)
+        assertTrue(result.warnings.isEmpty())
+    }
+
+    @Test fun parsesDotDateTwentyFourHourSecondsAndFlexibleColonSpacing() {
+        val result = KakaoExportParser.parse(
+            "2026. 9. 11. 14:30:05, 참여자A:첫 메시지\n" +
+                "2026. 9. 11. 14:31, 참여자B :응답"
+        )
+        assertEquals(listOf("첫 메시지", "응답"), result.messages.map { it.message })
+        assertEquals(55_000L, result.messages[1].timestamp - result.messages[0].timestamp)
+        assertTrue(result.warnings.isEmpty())
+    }
+
+    @Test fun combinesSplitExportPartsWithoutAppendingRepeatedHeadersToMessages() {
+        val first = "Talk_2026.9.11 14:32-1.txt\n저장한 날짜 : 2026. 9. 12. 오후 1:00\n" +
+            "2026. 9. 11. 오후 2:30, 참여자A : 첫 메시지"
+        val second = "Talk_2026.9.11 14:32-2.txt\n저장한 날짜 : 2026. 9. 12. 오후 1:00\n" +
+            "2026. 9. 11. 오후 2:31, 참여자B : 응답"
+        val result = KakaoExportParser.parse("$first\n$second")
+
+        assertEquals(listOf("첫 메시지", "응답"), result.messages.map { it.message })
+        assertTrue(result.warnings.isEmpty())
+    }
+
+    @Test fun acceptsCompactTitleAndUnicodeLineSeparators() {
+        val result = KakaoExportParser.parse(
+            "연습방님과 카카오톡 대화\u2028" +
+                "2026년 9월 11일 오후 2:30, 참여자A: 메시지\u0085" +
+                "2026년 9월 11일 오후 2:31, 참여자B : 응답"
+        )
+        assertEquals("연습방", result.title)
+        assertEquals(2, result.messages.size)
+        assertTrue(result.warnings.isEmpty())
+    }
+
     @Test fun preservesRepeatedMessagesAsDistinctOccurrences() {
         val line = "2026년 9월 11일 오후 2:30, 참여자A : 네"
         val messages = KakaoExportParser.parse("$line\n$line").messages
@@ -51,7 +97,7 @@ class KakaoExportParserTest {
     }
 
     @Test fun unsupportedDayBoundaryCannotReuseThePreviousDay() {
-        val result = KakaoExportParser.parse("2026년 9월 11일 금요일\n[참여자A] [오전 1:00] 정상\n2026-09-12 Saturday\n[참여자A] [오전 1:00] 제외")
+        val result = KakaoExportParser.parse("2026년 9월 11일 금요일\n[참여자A] [오전 1:00] 정상\n2026년 09월의 기록\n[참여자A] [오전 1:00] 제외")
         assertEquals(listOf("정상"), result.messages.map { it.message })
         assertEquals(2, result.warnings.size)
     }
