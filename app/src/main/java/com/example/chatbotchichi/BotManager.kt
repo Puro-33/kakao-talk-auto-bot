@@ -53,6 +53,14 @@ object BotManager {
         }
         if (bound != null) return bound.takeIf { it.enabled && senderAllowed(it, sender) }
 
+        // KakaoTalk can repost the same conversation with a different platform
+        // identity after an app update. If the selected title identifies exactly
+        // one configured room, retain routing without weakening duplicate-title
+        // isolation.
+        val uniqueSelected = configs.filter { it.conversationId != null && roomMatches(it.roomPattern, room) }
+            .singleOrNull()
+        if (uniqueSelected != null) return uniqueSelected.takeIf { it.enabled && senderAllowed(it, sender) }
+
         val roomConfig = configs
             .asSequence()
             .filter { it.conversationId == null }
