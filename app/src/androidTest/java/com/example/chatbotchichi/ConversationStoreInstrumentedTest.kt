@@ -133,7 +133,7 @@ class ConversationStoreInstrumentedTest {
         assertEquals(0, ConversationStore.profiles(context, deleted).second.sampleCount)
     }
 
-    @Test fun maintenancePrunesOldRowsAndRebuildsProfiles() {
+    @Test fun maintenancePrunesOldNotificationsButKeepsImportedLearningHistory() {
         val room = ConversationStore.createRoom(context, "보관 테스트")
         ConversationStore.importExport(context, room, ownExport("보관표현이요."), "본인")
         assertTrue(ConversationStore.profiles(context, room).first.usable)
@@ -143,13 +143,15 @@ class ConversationStoreInstrumentedTest {
             it.execSQL("UPDATE imports SET imported_at=? WHERE room_id=?", arrayOf<Any>(expiredAt, room))
         }
         ConversationStore.closeForTest()
-        assertFalse(ConversationStore.profiles(context, room, refresh = false).first.usable)
-        for (table in listOf("messages", "participants", "imports")) assertEquals(table, 0, count(table, room))
-        assertEquals(0, ConversationStore.profiles(context, room).first.sampleCount)
-        assertFalse(ConversationStore.profilePreview(context, room).contains("보관표현"))
+        assertTrue(ConversationStore.profiles(context, room, refresh = false).first.usable)
+        assertEquals(12, count("messages", room))
+        assertEquals(1, count("participants", room))
+        assertEquals(1, count("imports", room))
+        assertEquals(12, ConversationStore.profiles(context, room).first.sampleCount)
+        assertTrue(ConversationStore.profilePreview(context, room).contains("보관표현"))
         val expiredImport = ConversationStore.importExport(context, room, export("본인" to "너무 오래됨", time = expiredAt), "본인")
-        assertEquals(0, expiredImport.inserted)
-        assertEquals(1, expiredImport.expired)
+        assertEquals(1, expiredImport.inserted)
+        assertEquals(0, expiredImport.expired)
     }
 
     private fun legacyFile(title: String, messages: List<Pair<String, Boolean>>): File {
