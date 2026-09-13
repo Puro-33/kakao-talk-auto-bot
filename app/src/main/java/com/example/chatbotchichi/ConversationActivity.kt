@@ -107,14 +107,19 @@ class ConversationActivity : AppCompatActivity() {
 
     private fun handleShareIntent(incoming: Intent?) {
         if (incoming?.action !in setOf(Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE)) return
-        val stream = incoming.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+        val stream = if (incoming.action == Intent.ACTION_SEND_MULTIPLE) {
+            incoming.getParcelableArrayListExtra<Uri>(Intent.EXTRA_STREAM)?.firstOrNull()
+        } else {
+            incoming.getParcelableExtra(Intent.EXTRA_STREAM)
+        }
             ?: incoming.clipData?.getItemAt(0)?.uri
         if (stream != null) {
             try { contentResolver.takePersistableUriPermission(stream, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
             inspectExport(stream)
             return
         }
-        incoming.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+        (incoming.getCharSequenceExtra(Intent.EXTRA_TEXT)
+            ?: incoming.clipData?.getItemAt(0)?.text)?.toString()
             ?.takeIf { it.isNotBlank() }
             ?.let(::inspectRawExport)
     }
