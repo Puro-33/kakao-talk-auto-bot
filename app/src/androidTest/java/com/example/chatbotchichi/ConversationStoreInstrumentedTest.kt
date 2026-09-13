@@ -253,7 +253,7 @@ class ConversationStoreInstrumentedTest {
         assertTrue(ConversationStore.recentMessages(context, deleted).isEmpty())
     }
 
-    @Test fun screenTitleSelectionIsExplicitIdempotentAndDoesNotEnableCapture() {
+    @Test fun screenTitleSelectionIsExplicitIdempotentAndEnablesCaptureWhenAddedAsReplyTarget() {
         val imported = ConversationStore.createRoom(context, "선택한 방")
         val selected = ConversationStore.ensureScreenSelectedRoom(context, "선택한 방")
         assertNotEquals(imported, selected)
@@ -264,8 +264,6 @@ class ConversationStoreInstrumentedTest {
         assertFalse(room.captureEnabled)
         assertFalse(ConversationStore.listRooms(context).first { it.id == imported }.selectedByTitle)
         assertEquals(selected, BotManager.addScreenSelectedRoom(context, "선택한 방").conversationId)
-        assertFalse(ConversationStore.isCaptureEnabled(context, selected))
-        ConversationStore.setCaptureEnabled(context, selected, true)
         assertTrue(ConversationStore.isCaptureEnabled(context, selected))
         ConversationStore.closeForTest()
         assertEquals(selected, ConversationStore.ensureScreenSelectedRoom(context, "선택한 방"))

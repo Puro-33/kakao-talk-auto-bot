@@ -102,7 +102,8 @@ object BotManager {
             roomMemory = ""
         )
         saveConfig(context, config)
-        // Selecting a reply target does not enable ConversationStore message capture.
+        // A selected reply target is also the learning target; keep both flags in sync.
+        ConversationStore.setCaptureEnabled(context, room.id, config.captureEnabled)
         return config
     }
 
