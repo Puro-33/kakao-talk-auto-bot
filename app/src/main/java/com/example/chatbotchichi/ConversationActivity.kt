@@ -3,6 +3,7 @@ package com.example.kakaotalkautobot
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -30,6 +31,7 @@ class ConversationActivity : AppCompatActivity() {
     private lateinit var content: LinearLayout
     private lateinit var roomList: LinearLayout
     private lateinit var status: TextView
+    private lateinit var notificationGuidance: TextView
     private var busy = false
 
     private data class ImportPreview(
@@ -38,10 +40,6 @@ class ConversationActivity : AppCompatActivity() {
     )
 
     private class ExportReadException(message: String) : Exception(message)
-
-    private val openExport = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) inspectExport(uri)
-    }
 
     private val roomSelection = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
@@ -64,6 +62,13 @@ class ConversationActivity : AppCompatActivity() {
         })
         content.addView(label("대화 수집·말투 분석", 24f))
         content.addView(label(getString(R.string.conversation_collection_intro)))
+        notificationGuidance = label("")
+        notificationGuidance.id = R.id.conversation_notification_guidance
+        notificationGuidance.accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE
+        content.addView(notificationGuidance)
+        content.addView(button(getString(R.string.open_notification_access_settings), outlined = true) {
+            startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+        }.apply { id = R.id.btn_open_notification_access })
         content.addView(button(getString(R.string.select_capture_room)) {
             roomSelection.launch(Intent(this, RoomSelectionActivity::class.java))
         }.apply { id = R.id.btn_select_capture_room })
@@ -79,13 +84,44 @@ class ConversationActivity : AppCompatActivity() {
         content.addView(roomList)
         content.addView(label(getString(R.string.conversation_history_optional)))
         content.addView(button(getString(R.string.import_past_conversation), outlined = true) {
-            openExport.launch(arrayOf("text/plain", "application/octet-stream"))
+            openKakaoForExport()
         }.apply { id = R.id.btn_import_past_conversation })
+        handleShareIntent(intent)
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleShareIntent(intent)
+    }
+
+    private fun openKakaoForExport() {
+        val kakao = packageManager.getLaunchIntentForPackage("com.kakao.talk")
+        if (kakao == null) {
+            status.setText(R.string.kakao_not_installed)
+            return
+        }
+        status.setText(R.string.conversation_export_from_kakao_hint)
+        startActivity(kakao)
+    }
+
+    private fun handleShareIntent(incoming: Intent?) {
+        if (incoming?.action != Intent.ACTION_SEND) return
+        val stream = incoming.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+        if (stream != null) {
+            try { contentResolver.takePersistableUriPermission(stream, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
+            inspectExport(stream)
+            return
+        }
+        incoming.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+            ?.takeIf { it.isNotBlank() }
+            ?.let(::inspectRawExport)
     }
 
     override fun onResume() {
         super.onResume()
         if (::content.isInitialized && ::status.isInitialized && !busy) refresh()
+        if (::notificationGuidance.isInitialized) refreshNotificationGuidance()
     }
 
     override fun onDestroy() {
@@ -101,6 +137,14 @@ class ConversationActivity : AppCompatActivity() {
         status.text = if (rows.isEmpty()) getString(R.string.conversation_rooms_empty)
             else getString(R.string.conversation_room_count, rows.size)
         rows.forEach { (room, preview) -> renderRoom(room, preview) }
+    }
+
+    private fun refreshNotificationGuidance() {
+        notificationGuidance.text = if (NotificationListener.isAccessEnabled(this)) {
+            getString(R.string.notification_access_enabled_guidance)
+        } else {
+            getString(R.string.notification_access_disabled_guidance)
+        }
     }
 
     private fun confirmCapture(title: String) {
@@ -152,8 +196,11 @@ class ConversationActivity : AppCompatActivity() {
         roomList.addView(panel)
     }
 
-    private fun inspectExport(uri: Uri) = background("파일을 확인하는 중…", {
-        val raw = readExport(uri)
+    private fun inspectExport(uri: Uri) = background("공유된 대화를 확인하는 중…", {
+        readExport(uri)
+    }) { raw -> inspectRawExport(raw) }
+
+    private fun inspectRawExport(raw: String) = background("공유된 대화를 확인하는 중…", {
         val parsed = KakaoExportParser.parse(raw)
         val participants = parsed.participants
         if (parsed.messages.isEmpty() || participants.isEmpty()) {
@@ -200,7 +247,7 @@ class ConversationActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("대화 가져오기 확인")
             .setMessage("대상: ${destination?.let(::roomLabel) ?: "$title (새 방)"}\n본인: $selfName\n" +
-                "읽은 메시지: ${messageCount}개\n\n최근 90일만 보관하고 동일 파일의 중복 메시지는 건너뜁니다. " +
+                "읽은 메시지: ${messageCount}개\n\n가져온 기록은 사용자가 삭제할 때까지 보관하고 동일 파일의 중복 메시지는 건너뜁니다. " +
                 "동명이인이 있다면 본인 발화를 구분할 수 없으므로 취소하세요.\n\n" +
                 "앱이 생성 이력을 확인한 AI 답장은 제외합니다. 이전·외부 자동답장이 섞인 파일은 본인이 직접 작성한 발화만 남겨 준비하세요.\n\n해석 경고:\n$warningText\n\n" +
                 "가져오기는 자동답장을 켜지 않습니다. 새 방의 알림 수집은 OFF로 시작합니다.")

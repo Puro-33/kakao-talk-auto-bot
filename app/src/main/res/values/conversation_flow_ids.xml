@@ -3,5 +3,7 @@
     <item name="conversation_status" type="id" />
     <item name="btn_select_capture_room" type="id" />
     <item name="btn_refresh_conversations" type="id" />
+    <item name="conversation_notification_guidance" type="id" />
+    <item name="btn_open_notification_access" type="id" />
     <item name="btn_import_past_conversation" type="id" />
 </resources>

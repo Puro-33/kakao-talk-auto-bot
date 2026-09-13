@@ -23,7 +23,7 @@ object ConversationStyleAnalyzer {
     fun analyze(messages: List<RoomHistoryMessage>, ownOnly: Boolean, now: Long): ConversationStyleProfile {
         val samples = messages.asSequence()
             .filter { it.kind == MessageKind.SELF || (!ownOnly && it.kind == MessageKind.OTHER) }
-            .filter { it.timestamp in (now - RETENTION_MS)..now && it.message.isNotBlank() }
+            .filter { (it.source == "export" || it.source == "legacy-import" || it.timestamp in (now - RETENTION_MS)..now) && it.timestamp <= now && it.message.isNotBlank() }
             .sortedBy { it.timestamp }.toList().takeLast(MAX_SAMPLES)
         if (samples.isEmpty()) return ConversationStyleProfile(updatedAt = now)
         val first = samples.first().timestamp

@@ -7,8 +7,8 @@ import org.junit.Test
 
 class ConversationStyleAnalyzerTest {
     private val now = 1_800_000_000_000L
-    private fun message(text: String, kind: MessageKind, time: Long = now - 1_000) =
-        RoomHistoryMessage("테스트 참여자", text, kind == MessageKind.OTHER, time, kind, "fixture")
+    private fun message(text: String, kind: MessageKind, time: Long = now - 1_000, source: String = "fixture") =
+        RoomHistoryMessage("테스트 참여자", text, kind == MessageKind.OTHER, time, kind, source)
     private fun samples(text: String, kind: MessageKind, count: Int = 12) =
         (0 until count).map { message(text, kind, now - 1_000 - it) }
 
@@ -53,6 +53,17 @@ class ConversationStyleAnalyzerTest {
         assertEquals(2, profile.sampleCount)
         assertEquals(cutoff, profile.firstTimestamp)
         assertEquals(now, profile.lastTimestamp)
+    }
+
+    @Test fun importedHistoryRemainsEligibleBeyondLiveNotificationRetention() {
+        val old = now - ConversationStyleAnalyzer.RETENTION_MS - 1
+        val profile = ConversationStyleAnalyzer.analyze(
+            (0 until 12).map { message("가져온 말투예요.", MessageKind.SELF, old + it, source = "export") },
+            true, now
+        )
+        assertEquals(12, profile.sampleCount)
+        assertTrue(profile.usable)
+        assertEquals(old, profile.firstTimestamp)
     }
 
     @Test fun onlyNewestFiveHundredEligibleMessagesContribute() {

@@ -177,7 +177,7 @@ object ConversationStore {
         transaction(db) {
             db.update("conversations", ContentValues().apply { put("self_name", selfName) }, "id=?", arrayOf(roomId))
             for (message in parsed.messages) {
-                if (message.timestamp < now - ConversationStyleAnalyzer.RETENTION_MS || message.timestamp > now) { expired++; continue }
+                if (message.timestamp > now) { expired++; continue }
                 val base = digest("${message.timestamp}\u0000${message.sender}\u0000${message.message}")
                 val occurrence = occurrences.getOrDefault(base, 0)
                 occurrences[base] = occurrence + 1
@@ -363,8 +363,8 @@ object ConversationStore {
         transaction(db) {
             val rooms = db.rawQuery("SELECT DISTINCT room_id FROM messages WHERE sent_at<?", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
                 .use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.getString(0)) } }
-            db.delete("messages", "sent_at<?", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
-            db.delete("imports", "imported_at<?", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
+            db.delete("messages", "sent_at<? AND source NOT IN ('export','legacy-import')", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
+            db.delete("imports", "imported_at<? AND room_id NOT IN (SELECT DISTINCT room_id FROM messages WHERE source IN ('export','legacy-import'))", arrayOf((now - ConversationStyleAnalyzer.RETENTION_MS).toString()))
             db.execSQL("DELETE FROM participants WHERE NOT EXISTS (SELECT 1 FROM messages WHERE messages.room_id=participants.room_id AND messages.sender=participants.name)")
             rooms.forEach { dirty(db, it) }
             if (rooms.isNotEmpty()) {

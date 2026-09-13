@@ -26,6 +26,12 @@ class NotificationListener : NotificationListenerService() {
     companion object {
         @Volatile private var connectedListener = WeakReference<NotificationListener>(null)
 
+        /** Returns whether Android has granted this app notification-listener access. */
+        fun isAccessEnabled(context: Context): Boolean =
+            packageName(context) in NotificationManagerCompat.getEnabledListenerPackages(context)
+
+        private fun packageName(context: Context): String = context.applicationContext.packageName
+
         /** Refresh room metadata only; existing messages are never replayed or answered. */
         suspend fun refreshObservedRooms(): Boolean {
             val listener = connectedListener.get() ?: return false
