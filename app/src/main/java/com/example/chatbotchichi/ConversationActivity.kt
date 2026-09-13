@@ -106,8 +106,9 @@ class ConversationActivity : AppCompatActivity() {
     }
 
     private fun handleShareIntent(incoming: Intent?) {
-        if (incoming?.action != Intent.ACTION_SEND) return
+        if (incoming?.action !in setOf(Intent.ACTION_SEND, Intent.ACTION_SEND_MULTIPLE)) return
         val stream = incoming.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
+            ?: incoming.clipData?.getItemAt(0)?.uri
         if (stream != null) {
             try { contentResolver.takePersistableUriPermission(stream, Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: SecurityException) { }
             inspectExport(stream)
